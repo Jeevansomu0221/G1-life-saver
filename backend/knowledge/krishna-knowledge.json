@@ -1,0 +1,137 @@
+[
+  {
+    "id": "gita_2_47",
+    "source": "Bhagavad Gita",
+    "reference": "2.47",
+    "title": "Duty without attachment to results",
+    "themes": ["duty", "action", "discipline", "results", "anxiety", "focus", "work"],
+    "summary": "Krishna teaches that one has control over action alone, not over the fruits of action. This is a foundation for disciplined effort without anxiety.",
+    "passage": "Perform your duty with full sincerity, but do not become bound by craving for the result."
+  },
+  {
+    "id": "gita_2_48",
+    "source": "Bhagavad Gita",
+    "reference": "2.48",
+    "title": "Steadiness in success and failure",
+    "themes": ["equanimity", "success", "failure", "balance", "mind", "stress"],
+    "summary": "Krishna calls for inner balance while acting, remaining steady in gain and loss, victory and defeat.",
+    "passage": "Established in yoga, act with steadiness and let success and failure not shake the center of your being."
+  },
+  {
+    "id": "gita_3_19",
+    "source": "Bhagavad Gita",
+    "reference": "3.19",
+    "title": "Act without clinging",
+    "themes": ["karma yoga", "discipline", "work", "procrastination", "selfless action"],
+    "summary": "One should perform necessary action without attachment, because such action purifies and leads upward.",
+    "passage": "Therefore perform your duty steadfastly, without attachment, and through such action one moves toward fulfillment."
+  },
+  {
+    "id": "gita_3_30",
+    "source": "Bhagavad Gita",
+    "reference": "3.30",
+    "title": "Offer action with clarity",
+    "themes": ["surrender", "clarity", "stress", "responsibility", "fear"],
+    "summary": "Krishna asks Arjuna to dedicate action to the Divine and act free from feverish agitation.",
+    "passage": "Offer your actions with understanding, cast off inner fever, and stand to do what must be done."
+  },
+  {
+    "id": "gita_4_7_8",
+    "source": "Bhagavad Gita",
+    "reference": "4.7-8",
+    "title": "Krishna restores dharma",
+    "themes": ["dharma", "justice", "purpose", "protection", "righteousness"],
+    "summary": "Krishna declares that when dharma declines and disorder rises, he manifests to protect the good and restore balance.",
+    "passage": "When righteousness declines and disorder prevails, I arise to protect the noble and restore dharma."
+  },
+  {
+    "id": "gita_6_5",
+    "source": "Bhagavad Gita",
+    "reference": "6.5",
+    "title": "Lift yourself by the self",
+    "themes": ["self mastery", "mind", "discipline", "motivation", "growth"],
+    "summary": "The mind can elevate or degrade a person. Self-effort and self-governance are central teachings here.",
+    "passage": "Let a person raise oneself by oneself; the mind can be a friend when disciplined and an enemy when neglected."
+  },
+  {
+    "id": "gita_6_26",
+    "source": "Bhagavad Gita",
+    "reference": "6.26",
+    "title": "Bring the wandering mind back",
+    "themes": ["mindfulness", "focus", "meditation", "distraction", "attention"],
+    "summary": "Whenever the mind wanders, it should be brought back gently and firmly to the chosen center.",
+    "passage": "When the restless mind strays, bring it back again and again under the guidance of understanding."
+  },
+  {
+    "id": "gita_12_13_14",
+    "source": "Bhagavad Gita",
+    "reference": "12.13-14",
+    "title": "Qualities of a devoted person",
+    "themes": ["compassion", "devotion", "anger", "relationships", "peace"],
+    "summary": "Krishna praises one who is compassionate, free from malice, forgiving, steady, and inwardly calm.",
+    "passage": "Dear is the one who is compassionate, humble, steady, forgiving, and not ruled by agitation."
+  },
+  {
+    "id": "gita_18_66",
+    "source": "Bhagavad Gita",
+    "reference": "18.66",
+    "title": "Surrender and trust",
+    "themes": ["surrender", "trust", "grief", "burden", "faith"],
+    "summary": "Krishna culminates his teaching by calling for wholehearted refuge in the Divine beyond fear.",
+    "passage": "Take refuge in Me alone with trust, and do not be overcome by sorrow or fear."
+  },
+  {
+    "id": "bhagavatam_govardhana",
+    "source": "Srimad Bhagavatam",
+    "reference": "Govardhana episode",
+    "title": "Protection through courage and trust",
+    "themes": ["protection", "faith", "community", "courage", "leadership"],
+    "summary": "Krishna lifts Govardhana to protect the people of Vraja, showing courage, protection, and loving leadership.",
+    "passage": "Krishna shelters the people under Govardhana, teaching that divine care and courageous action can stand together."
+  },
+  {
+    "id": "bhagavatam_uddhava",
+    "source": "Srimad Bhagavatam",
+    "reference": "Teachings to Uddhava",
+    "title": "Inner detachment and devotion",
+    "themes": ["detachment", "wisdom", "devotion", "clarity", "renunciation"],
+    "summary": "Krishna teaches detachment from fleeting things while keeping the heart anchored in devotion and discernment.",
+    "passage": "Keep the heart anchored in the Eternal, and let passing waves of the world not rule your inner state."
+  },
+  {
+    "id": "mahabharata_arjuna_despair",
+    "source": "Mahabharata",
+    "reference": "Arjuna's crisis on the battlefield",
+    "title": "Guidance in moral confusion",
+    "themes": ["confusion", "fear", "purpose", "moral conflict", "decision"],
+    "summary": "Arjuna's despair becomes the setting for Krishna's teaching. Confusion is not condemned; it becomes the doorway to wisdom.",
+    "passage": "When Arjuna's heart trembles in confusion, Krishna does not mock him; he illumines the path of right understanding."
+  },
+  {
+    "id": "krishna_friendship",
+    "source": "Life of Krishna",
+    "reference": "Krishna as friend and guide",
+    "title": "Compassionate friendship",
+    "themes": ["friendship", "support", "encouragement", "trust", "companionship"],
+    "summary": "Krishna guides not only as God and teacher, but also as friend, charioteer, and intimate companion.",
+    "passage": "Krishna's guidance is full of majesty, yet he comes close as a friend who stands beside the seeker in difficulty."
+  },
+  {
+    "id": "krishna_leadership",
+    "source": "Life of Krishna",
+    "reference": "Krishna's leadership in crisis",
+    "title": "Calm action in crisis",
+    "themes": ["leadership", "crisis", "decision", "calmness", "responsibility"],
+    "summary": "Krishna repeatedly acts with calm intelligence in times of danger, teaching leadership joined with wisdom.",
+    "passage": "In crisis, Krishna does not become noisy; he becomes clear. Right action begins when panic gives way to discernment."
+  },
+  {
+    "id": "krishna_devotion",
+    "source": "Krishna Bhakti tradition",
+    "reference": "General devotional teaching",
+    "title": "Love joined with responsibility",
+    "themes": ["bhakti", "love", "service", "devotion", "daily life"],
+    "summary": "Devotion is not escape from life. It expresses itself through sincerity, service, remembrance, and right conduct.",
+    "passage": "Let love for the Divine refine the way you work, speak, serve, and endure."
+  }
+]
