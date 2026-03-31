@@ -19,6 +19,9 @@ const config: ExpoConfig = {
     permissions: ["VIBRATE"]
   },
   extra: {
+    eas: {
+      projectId: "b1f61d46-454c-4e09-8640-94d3696a7dfb"
+    },
     aiProxyUrl: process.env.EXPO_PUBLIC_AI_PROXY_URL ?? "",
     aiModel: process.env.EXPO_PUBLIC_AI_MODEL ?? "gemini-2.5-flash-lite",
     geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "",

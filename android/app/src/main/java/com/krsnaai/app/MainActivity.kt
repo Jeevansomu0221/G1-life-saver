@@ -1,4 +1,4 @@
-package com.g1lifesaver.app
+package com.krsnaai.app
 
 import android.os.Build
 import android.os.Bundle
