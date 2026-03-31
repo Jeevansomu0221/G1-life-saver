@@ -28,7 +28,12 @@ export type ChatMessage = {
   createdAt: string;
 };
 
+export type UserSettings = {
+  hasCompletedOnboarding: boolean;
+};
+
 export type AppStorageShape = {
   tasks: Task[];
   chatHistory: ChatMessage[];
+  settings: UserSettings;
 };

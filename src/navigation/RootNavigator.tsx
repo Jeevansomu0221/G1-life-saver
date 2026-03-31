@@ -1,13 +1,16 @@
 import React from "react";
-import { View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { HomeScreen } from "@/screens/HomeScreen";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { TasksAlarmsScreen } from "@/screens/TasksAlarmsScreen";
 import { KrishnaAIGuideScreen } from "@/screens/KrishnaAIGuideScreen";
-import { RootTabParamList } from "@/types/navigation";
+import { WelcomeScreen } from "@/screens/WelcomeScreen";
+import { useAppData } from "@/state/AppDataContext";
+import { RootStackParamList, RootTabParamList } from "@/types/navigation";
 import { colors } from "@/theme/colors";
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function Dot({ focused, tint }: { focused: boolean; tint: string }) {
   return (
@@ -24,7 +27,7 @@ function Dot({ focused, tint }: { focused: boolean; tint: string }) {
   );
 }
 
-export function RootNavigator() {
+function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -42,13 +45,6 @@ export function RootNavigator() {
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ focused, color }) => <Dot focused={focused} tint={color} />
-        }}
-      />
-      <Tab.Screen
         name="Tasks"
         component={TasksAlarmsScreen}
         options={{
@@ -56,12 +52,48 @@ export function RootNavigator() {
         }}
       />
       <Tab.Screen
-        name="Krishna AI Guide"
+        name="Krsna AI"
         component={KrishnaAIGuideScreen}
         options={{
           tabBarIcon: ({ focused, color }) => <Dot focused={focused} tint={color} />
         }}
       />
     </Tab.Navigator>
+  );
+}
+
+export function RootNavigator() {
+  const { settings, hydrated } = useAppData();
+
+  if (!hydrated) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.gold} />
+      </View>
+    );
+  }
+
+  return (
+    <Stack.Navigator
+      initialRouteName={settings.hasCompletedOnboarding ? "MainTabs" : "Welcome"}
+      screenOptions={{
+        contentStyle: {
+          backgroundColor: colors.background
+        },
+        headerStyle: {
+          backgroundColor: colors.background
+        },
+        headerTintColor: colors.text,
+        headerTitleStyle: {
+          color: colors.text,
+          fontWeight: "700"
+        }
+      }}
+    >
+      {!settings.hasCompletedOnboarding ? (
+        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
+      ) : null}
+      <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+    </Stack.Navigator>
   );
 }

@@ -5,7 +5,10 @@ const STORAGE_KEY = "g1-life-saver-storage";
 
 const emptyState: AppStorageShape = {
   tasks: [],
-  chatHistory: []
+  chatHistory: [],
+  settings: {
+    hasCompletedOnboarding: false
+  }
 };
 
 export const storageService = {

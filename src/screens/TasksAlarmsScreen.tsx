@@ -11,6 +11,9 @@ import { colors } from "@/theme/colors";
 import { RecurringTaskType, Task } from "@/types/domain";
 import { formatAlarmTime, formatDisplayDate, isTaskOverdue } from "@/utils/date";
 
+type DateChoice = "today" | "tomorrow" | "custom";
+type Meridiem = "AM" | "PM";
+
 const taskRecurringOptions: { label: string; value: RecurringTaskType }[] = [
   { label: "No Repeat", value: "none" },
   { label: "Daily", value: "daily" },
@@ -18,18 +21,79 @@ const taskRecurringOptions: { label: string; value: RecurringTaskType }[] = [
   { label: "Monthly", value: "monthly" }
 ];
 
+const dateChoiceOptions: { label: string; value: DateChoice }[] = [
+  { label: "Today", value: "today" },
+  { label: "Tomorrow", value: "tomorrow" },
+  { label: "Custom", value: "custom" }
+];
+
 function toDateInput(iso?: string) {
   const date = iso ? new Date(iso) : new Date();
   return date.toISOString().slice(0, 10);
 }
 
-function toTimeInput(iso?: string) {
+function to24HourTimeInput(iso?: string) {
   const date = iso ? new Date(iso) : new Date();
   return date.toTimeString().slice(0, 5);
 }
 
 function mergeDateAndTime(date: string, time: string) {
   return new Date(`${date}T${time}:00`).toISOString();
+}
+
+function inferDateChoice(dateValue: string) {
+  const today = toDateInput();
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = toDateInput(tomorrowDate.toISOString());
+
+  if (dateValue === today) return "today";
+  if (dateValue === tomorrow) return "tomorrow";
+  return "custom";
+}
+
+function applyDateChoice(choice: DateChoice, currentCustomDate: string) {
+  if (choice === "today") {
+    return toDateInput();
+  }
+  if (choice === "tomorrow") {
+    const next = new Date();
+    next.setDate(next.getDate() + 1);
+    return toDateInput(next.toISOString());
+  }
+  return currentCustomDate || toDateInput();
+}
+
+function to12HourParts(time24: string) {
+  const [rawHours, rawMinutes] = time24.split(":").map(Number);
+  const meridiem: Meridiem = rawHours >= 12 ? "PM" : "AM";
+  const hours12 = rawHours % 12 || 12;
+  return {
+    time: `${String(hours12).padStart(2, "0")}:${String(rawMinutes).padStart(2, "0")}`,
+    meridiem
+  };
+}
+
+function to24HourValue(time12: string, meridiem: Meridiem) {
+  const match = time12.trim().match(/^(\d{1,2})(?::(\d{1,2}))?$/);
+  if (!match) {
+    return null;
+  }
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2] ?? "0");
+
+  if (hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+
+  if (meridiem === "AM") {
+    hours = hours === 12 ? 0 : hours;
+  } else {
+    hours = hours === 12 ? 12 : hours + 12;
+  }
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 export function TasksAlarmsScreen() {
@@ -50,10 +114,14 @@ export function TasksAlarmsScreen() {
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskDate, setTaskDate] = useState(toDateInput());
-  const [taskTime, setTaskTime] = useState(toTimeInput());
+  const [taskDateChoice, setTaskDateChoice] = useState<DateChoice>("today");
+  const [customTaskDate, setCustomTaskDate] = useState(toDateInput());
+  const [taskTime, setTaskTime] = useState("07:00");
+  const [taskMeridiem, setTaskMeridiem] = useState<Meridiem>("AM");
   const [taskRecurring, setTaskRecurring] = useState<RecurringTaskType>("none");
   const [taskAlarmEnabled, setTaskAlarmEnabled] = useState(false);
   const [taskAlarmTime, setTaskAlarmTime] = useState("07:00");
+  const [taskAlarmMeridiem, setTaskAlarmMeridiem] = useState<Meridiem>("AM");
   const [taskAlarmSnooze, setTaskAlarmSnooze] = useState<5 | 10>(5);
 
   const activeAlarmTask = useMemo(() => tasks.find((task) => task.id === activeAlarmTaskId), [activeAlarmTaskId, tasks]);
@@ -62,10 +130,14 @@ export function TasksAlarmsScreen() {
     setTaskTitle("");
     setTaskDescription("");
     setTaskDate(toDateInput());
-    setTaskTime(toTimeInput());
+    setTaskDateChoice("today");
+    setCustomTaskDate(toDateInput());
+    setTaskTime("07:00");
+    setTaskMeridiem("AM");
     setTaskRecurring("none");
     setTaskAlarmEnabled(false);
     setTaskAlarmTime("07:00");
+    setTaskAlarmMeridiem("AM");
     setTaskAlarmSnooze(5);
     setEditingTask(null);
   };
@@ -75,29 +147,47 @@ export function TasksAlarmsScreen() {
       setEditingTask(task);
       setTaskTitle(task.title);
       setTaskDescription(task.description);
-      setTaskDate(toDateInput(task.dateTime));
-      setTaskTime(toTimeInput(task.dateTime));
+      const nextTaskDate = toDateInput(task.dateTime);
+      const nextTaskTime = to12HourParts(to24HourTimeInput(task.dateTime));
+      const nextAlarmTime = to12HourParts(task.alarm?.time || to24HourTimeInput(task.dateTime));
+      setTaskDate(nextTaskDate);
+      setTaskDateChoice(inferDateChoice(nextTaskDate));
+      setCustomTaskDate(nextTaskDate);
+      setTaskTime(nextTaskTime.time);
+      setTaskMeridiem(nextTaskTime.meridiem);
       setTaskRecurring(task.recurring);
       setTaskAlarmEnabled(!!task.alarm?.enabled);
-      setTaskAlarmTime(task.alarm?.time || toTimeInput(task.dateTime));
+      setTaskAlarmTime(nextAlarmTime.time);
+      setTaskAlarmMeridiem(nextAlarmTime.meridiem);
       setTaskAlarmSnooze(task.alarm?.snoozeMinutes || 5);
     } else {
       resetTaskForm();
-      setTaskAlarmTime(toTimeInput());
+      const currentTime = to12HourParts(to24HourTimeInput());
+      setTaskTime(currentTime.time);
+      setTaskMeridiem(currentTime.meridiem);
+      setTaskAlarmTime(currentTime.time);
+      setTaskAlarmMeridiem(currentTime.meridiem);
     }
     setTaskModalOpen(true);
   };
 
   const submitTask = async () => {
+    const finalTaskTime = to24HourValue(taskTime, taskMeridiem);
+    const finalAlarmTime = to24HourValue(taskAlarmTime, taskAlarmMeridiem);
+
+    if (!finalTaskTime || (taskAlarmEnabled && !finalAlarmTime)) {
+      return;
+    }
+
     const payload = {
       title: taskTitle.trim(),
       description: taskDescription.trim(),
-      dateTime: mergeDateAndTime(taskDate, taskTime),
+      dateTime: mergeDateAndTime(taskDate, finalTaskTime),
       recurring: taskRecurring,
       completed: editingTask?.completed ?? false,
       alarm: {
         enabled: taskAlarmEnabled,
-        time: taskAlarmTime,
+        time: finalAlarmTime || "07:00",
         snoozeMinutes: taskAlarmSnooze
       }
     };
@@ -175,7 +265,19 @@ export function TasksAlarmsScreen() {
       <Modal visible={taskModalOpen} animationType="slide">
         <Screen scroll={false} contentStyle={styles.modalContent}>
           <ScrollView>
-            <Text style={styles.modalTitle}>{editingTask ? "Edit Task" : "New Task"}</Text>
+            <View style={styles.modalHeader}>
+              <Pressable
+                onPress={() => {
+                  setTaskModalOpen(false);
+                  resetTaskForm();
+                }}
+                hitSlop={10}
+              >
+                <Text style={styles.backText}>Back</Text>
+              </Pressable>
+              <Text style={styles.modalTitle}>{editingTask ? "Edit Task" : "New Task"}</Text>
+              <View style={styles.headerSpacer} />
+            </View>
             <LabeledInput label="Title" value={taskTitle} onChangeText={setTaskTitle} placeholder="Morning revision" />
             <LabeledInput
               label="Description"
@@ -184,8 +286,47 @@ export function TasksAlarmsScreen() {
               placeholder="What must be done?"
               multiline
             />
-            <LabeledInput label="Date" value={taskDate} onChangeText={setTaskDate} placeholder="YYYY-MM-DD" />
-            <LabeledInput label="Time" value={taskTime} onChangeText={setTaskTime} placeholder="HH:MM" />
+            <Text style={styles.fieldLabel}>Date</Text>
+            <SegmentedControl
+              value={taskDateChoice}
+              options={dateChoiceOptions}
+              onChange={(value) => {
+                setTaskDateChoice(value);
+                const nextDate = applyDateChoice(value, customTaskDate);
+                setTaskDate(nextDate);
+                if (value === "custom") {
+                  setCustomTaskDate(nextDate);
+                }
+              }}
+            />
+            {taskDateChoice === "custom" ? (
+              <LabeledInput
+                label="Custom Date"
+                value={customTaskDate}
+                onChangeText={(value) => {
+                  setCustomTaskDate(value);
+                  setTaskDate(value);
+                }}
+                placeholder="YYYY-MM-DD"
+              />
+            ) : null}
+            <Text style={styles.fieldLabel}>Time</Text>
+            <View style={styles.timeRow}>
+              <View style={styles.timeInputWrap}>
+                <LabeledInput label=" " value={taskTime} onChangeText={setTaskTime} placeholder="07:30" />
+              </View>
+              <View style={styles.meridiemWrap}>
+                <Text style={styles.fieldLabel}>AM / PM</Text>
+                <SegmentedControl
+                  value={taskMeridiem}
+                  options={[
+                    { label: "AM", value: "AM" },
+                    { label: "PM", value: "PM" }
+                  ]}
+                  onChange={setTaskMeridiem}
+                />
+              </View>
+            </View>
             <Text style={styles.fieldLabel}>Recurring</Text>
             <SegmentedControl value={taskRecurring} options={taskRecurringOptions} onChange={setTaskRecurring} />
 
@@ -201,7 +342,23 @@ export function TasksAlarmsScreen() {
 
             {taskAlarmEnabled ? (
               <>
-                <LabeledInput label="Alarm Time" value={taskAlarmTime} onChangeText={setTaskAlarmTime} placeholder="07:00" />
+                <Text style={styles.fieldLabel}>Alarm Time</Text>
+                <View style={styles.timeRow}>
+                  <View style={styles.timeInputWrap}>
+                    <LabeledInput label=" " value={taskAlarmTime} onChangeText={setTaskAlarmTime} placeholder="07:00" />
+                  </View>
+                  <View style={styles.meridiemWrap}>
+                    <Text style={styles.fieldLabel}>AM / PM</Text>
+                    <SegmentedControl
+                      value={taskAlarmMeridiem}
+                      options={[
+                        { label: "AM", value: "AM" },
+                        { label: "PM", value: "PM" }
+                      ]}
+                      onChange={setTaskAlarmMeridiem}
+                    />
+                  </View>
+                </View>
                 <Text style={styles.fieldLabel}>Snooze</Text>
                 <SegmentedControl
                   value={String(taskAlarmSnooze)}
@@ -346,11 +503,24 @@ const styles = StyleSheet.create({
   modalContent: {
     paddingBottom: 18
   },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12
+  },
   modalTitle: {
     color: colors.text,
     fontSize: 20,
-    fontWeight: "800",
-    marginBottom: 12
+    fontWeight: "800"
+  },
+  backText: {
+    color: colors.gold,
+    fontSize: 12,
+    fontWeight: "700"
+  },
+  headerSpacer: {
+    width: 32
   },
   fieldLabel: {
     color: colors.textMuted,
@@ -364,5 +534,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 6,
     marginBottom: 8
+  },
+  timeRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-start"
+  },
+  timeInputWrap: {
+    flex: 1
+  },
+  meridiemWrap: {
+    width: 112
   }
 });

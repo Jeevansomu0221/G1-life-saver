@@ -1,5 +1,11 @@
+import { NavigatorScreenParams } from "@react-navigation/native";
+
 export type RootTabParamList = {
-  Home: undefined;
   Tasks: { focusType?: "tasks" } | undefined;
-  "Krishna AI Guide": undefined;
+  "Krsna AI": undefined;
+};
+
+export type RootStackParamList = {
+  Welcome: undefined;
+  MainTabs: NavigatorScreenParams<RootTabParamList> | undefined;
 };

@@ -2,9 +2,6 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { ChatMessage } from "@/types/domain";
 
-const systemPrompt =
-  "You are Lord Krishna speaking as a serene, wise, compassionate guide. Draw primarily from the Bhagavad Gita, and when relevant from the Srimad Bhagavatam and Krishna's life in the Mahabharata tradition. Teach dharma, disciplined action, devotion, clarity of mind, fearlessness, and detachment from results. Avoid slang, casual chatbot tone, and empty flattery. Keep replies short, usually 2 to 4 brief lines, with practical spiritual guidance.";
-
 function extractMessage(payload: any) {
   if (typeof payload?.message === "string") {
     return payload.message;
@@ -43,10 +40,12 @@ function extractMessage(payload: any) {
 
 export const aiService = {
   async askKrishna(history: ChatMessage[], userMessage: string) {
+    const systemPrompt = buildSystemPrompt();
     const proxyUrl = resolveProxyUrl();
+
     if (proxyUrl) {
       try {
-        const response = await fetch(proxyUrl, {
+        const response = await fetchWithRetry(proxyUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -71,12 +70,17 @@ export const aiService = {
           }
         }
       } catch {
-        // Fall through to direct OpenAI mode for Expo Go and similar dev setups.
+        // Fall through only in development auto mode.
       }
+    }
+
+    if (!__DEV__) {
+      throw new Error("The Krsna AI backend could not be reached. Reconnect the backend and try again.");
     }
 
     const geminiApiKey = Constants.expoConfig?.extra?.geminiApiKey;
     const model = Constants.expoConfig?.extra?.aiModel ?? "gemini-2.5-flash-lite";
+    const outputLimit = 90;
 
     if (geminiApiKey) {
       const geminiResponse = await fetch(
@@ -91,7 +95,7 @@ export const aiService = {
               parts: [{ text: systemPrompt }]
             },
             generationConfig: {
-              maxOutputTokens: 120,
+              maxOutputTokens: outputLimit,
               temperature: 0.7
             },
             contents: [
@@ -124,7 +128,7 @@ export const aiService = {
 
     const directApiKey = Constants.expoConfig?.extra?.openAIApiKey;
     if (!directApiKey) {
-      throw new Error("The Krishna AI service could not be reached.");
+      throw new Error("The Krsna AI service could not be reached.");
     }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -136,7 +140,7 @@ export const aiService = {
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         instructions: systemPrompt,
-        max_output_tokens: 120,
+        max_output_tokens: outputLimit,
         input: [
           ...history.slice(-12).map((message) => ({
             role: message.role === "assistant" ? "assistant" : "user",
@@ -152,15 +156,13 @@ export const aiService = {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
-        `OpenAI direct mode failed (${response.status}). ${errorText || "No error body returned."}`
-      );
+      throw new Error(`OpenAI direct mode failed (${response.status}). ${errorText || "No error body returned."}`);
     }
 
     const payload = await response.json();
     const message = extractMessage(payload);
     if (!message) {
-      throw new Error("The Krishna AI service returned an unexpected response.");
+      throw new Error("The Krsna AI service returned an unexpected response.");
     }
 
     return message;
@@ -188,6 +190,29 @@ export const aiService = {
     return "Speak your difficulty plainly. The mind becomes lighter when truth is faced directly. Stand firm in right action, loosen your attachment to results, and peace will begin to return.";
   }
 };
+
+function buildSystemPrompt() {
+  return "You are Lord Krsna speaking as a serene, wise, compassionate guide. Draw primarily from the Bhagavad Gita, and when relevant from the Srimad Bhagavatam and Krsna's life in the Mahabharata tradition. Teach dharma, disciplined action, devotion, clarity of mind, fearlessness, and detachment from results. Be warm, natural, and conversational without losing dignity. If the user writes in English, reply in English. If the user writes in Telugu using English letters, reply naturally in Telugu using English letters. Do not switch from English into Telugu unless the user clearly started in Telugu or asked for Telugu. Keep replies short, usually 1 to 3 brief lines. Use the name Krsna. At most use 1 or 2 gentle emojis when they truly fit.";
+}
+
+async function fetchWithRetry(url: string, init: RequestInit, retries = 2) {
+  let lastResponse: Response | undefined;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const response = await fetch(url, init);
+    lastResponse = response;
+    if (response.status !== 503 || attempt === retries) {
+      return response;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 900 * (attempt + 1)));
+  }
+
+  if (!lastResponse) {
+    throw new Error("The Krsna AI backend did not respond.");
+  }
+
+  return lastResponse;
+}
 
 function resolveProxyUrl() {
   const configuredUrl = Constants.expoConfig?.extra?.aiProxyUrl;

@@ -1,16 +1,21 @@
 import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  name: "G1 - Life Saver",
-  slug: "g1-life-saver",
+  name: "Krsna AI",
+  slug: "krsna-ai",
   version: "1.0.0",
   orientation: "portrait",
-  scheme: "g1lifesaver",
+  scheme: "krsnaai",
   userInterfaceStyle: "dark",
   assetBundlePatterns: ["**/*"],
   plugins: ["expo-notifications"],
+  icon: "./assets/krsna-ai-icon.png",
   android: {
-    package: "com.g1lifesaver.app",
+    package: "com.krsnaai.app",
+    adaptiveIcon: {
+      foregroundImage: "./assets/krsna-ai-icon.png",
+      backgroundColor: "#060B16"
+    },
     permissions: ["VIBRATE"]
   },
   extra: {

@@ -133,5 +133,32 @@
     "themes": ["bhakti", "love", "service", "devotion", "daily life"],
     "summary": "Devotion is not escape from life. It expresses itself through sincerity, service, remembrance, and right conduct.",
     "passage": "Let love for the Divine refine the way you work, speak, serve, and endure."
+  },
+  {
+    "id": "dashavatara",
+    "source": "Vaishnava tradition",
+    "reference": "Dashavatara",
+    "title": "Ten principal avatars of Vishnu",
+    "themes": ["avatars", "avatara", "dashavatara", "forms", "incarnations", "vishnu", "krsna"],
+    "summary": "A common traditional list of ten principal avatars includes Matsya, Kurma, Varaha, Narasimha, Vamana, Parasurama, Rama, Krsna, Buddha, and Kalki.",
+    "passage": "The commonly remembered ten principal avatars are Matsya, Kurma, Varaha, Narasimha, Vamana, Parasurama, Rama, Krsna, Buddha, and Kalki."
+  },
+  {
+    "id": "avatar_purpose",
+    "source": "Bhagavad Gita",
+    "reference": "4.7-8 explained",
+    "title": "Why the Divine appears in many forms",
+    "themes": ["avatars", "purpose", "incarnations", "forms", "dharma", "appearance"],
+    "summary": "The Divine appears in many forms in order to protect the good, restore dharma, and guide beings according to time and need.",
+    "passage": "I appear in different forms to protect, guide, and restore dharma whenever the world loses its balance."
+  },
+  {
+    "id": "krsna_identity",
+    "source": "Bhagavad Gita and Bhakti tradition",
+    "reference": "General theological understanding",
+    "title": "Krsna and Vishnu relationship",
+    "themes": ["krsna", "vishnu", "identity", "supreme", "avatar", "who are you"],
+    "summary": "Different traditions describe the relationship in different ways: some speak of Krsna as an avatar of Vishnu, while many bhakti traditions speak of Krsna as the original Supreme Lord from whom other forms expand.",
+    "passage": "In many traditions I am counted among the avatars; in many others I am seen as the original source from whom such forms expand."
   }
 ]

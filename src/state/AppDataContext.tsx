@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AppStorageShape, ChatMessage, Task } from "@/types/domain";
+import { AppStorageShape, ChatMessage, Task, UserSettings } from "@/types/domain";
 import { notificationService } from "@/services/notificationService";
 import { storageService } from "@/services/storageService";
 import { nextRecurringTaskDate } from "@/utils/date";
@@ -18,6 +18,7 @@ type ContextValue = AppStorageShape & {
   dismissTaskAlarm: (id: string) => Promise<void>;
   snoozeTaskAlarm: (id: string) => Promise<void>;
   addChatMessage: (message: Omit<ChatMessage, "id" | "createdAt">) => Promise<ChatMessage>;
+  completeOnboarding: () => Promise<void>;
   setActiveAlarmTaskIdFromNotification: (id?: string) => void;
 };
 
@@ -26,16 +27,22 @@ const AppDataContext = createContext<ContextValue | null>(null);
 export function AppDataProvider({ children }: PropsWithChildren) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [settings, setSettings] = useState<UserSettings>({
+    hasCompletedOnboarding: false
+  });
   const [hydrated, setHydrated] = useState(false);
   const [activeAlarmTaskId, setActiveAlarmTaskId] = useState<string>();
   const tasksRef = useRef<Task[]>([]);
   const chatHistoryRef = useRef<ChatMessage[]>([]);
+  const settingsRef = useRef<UserSettings>(settings);
 
   const persist = useCallback(async (next: AppStorageShape) => {
     tasksRef.current = next.tasks;
     chatHistoryRef.current = next.chatHistory;
+    settingsRef.current = next.settings;
     setTasks(next.tasks);
     setChatHistory(next.chatHistory);
+    setSettings(next.settings);
     await storageService.save(next);
   }, []);
 
@@ -46,6 +53,10 @@ export function AppDataProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     chatHistoryRef.current = chatHistory;
   }, [chatHistory]);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   useEffect(() => {
     async function hydrate() {
@@ -59,13 +70,16 @@ export function AppDataProvider({ children }: PropsWithChildren) {
 
       const nextState = {
         tasks: hydratedTasks,
-        chatHistory: loaded.chatHistory
+        chatHistory: loaded.chatHistory,
+        settings: loaded.settings
       };
 
       tasksRef.current = nextState.tasks;
       chatHistoryRef.current = nextState.chatHistory;
+      settingsRef.current = nextState.settings;
       setTasks(nextState.tasks);
       setChatHistory(nextState.chatHistory);
+      setSettings(nextState.settings);
       await storageService.save(nextState);
       setHydrated(true);
     }
@@ -83,7 +97,8 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       const notificationIds = await notificationService.scheduleTask(base);
       await persist({
         tasks: [{ ...base, ...notificationIds }, ...tasks],
-        chatHistory
+        chatHistory,
+        settings: settingsRef.current
       });
     },
     [chatHistory, persist, tasks]
@@ -104,7 +119,8 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       const notificationIds = await notificationService.scheduleTask(updatedBase);
       await persist({
         tasks: tasks.map((task) => (task.id === id ? { ...updatedBase, ...notificationIds } : task)),
-        chatHistory
+        chatHistory,
+        settings: settingsRef.current
       });
     },
     [chatHistory, persist, tasks]
@@ -118,7 +134,8 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       await notificationService.dismissPresentedTaskAlarmNotifications(id);
       await persist({
         tasks: tasks.filter((task) => task.id !== id),
-        chatHistory
+        chatHistory,
+        settings: settingsRef.current
       });
       setActiveAlarmTaskId((current) => (current === id ? undefined : current));
     },
@@ -153,7 +170,8 @@ export function AppDataProvider({ children }: PropsWithChildren) {
 
         await persist({
           tasks: [{ ...nextTask, ...nextNotificationIds }, completedTask, ...tasks.filter((task) => task.id !== id)],
-          chatHistory
+          chatHistory,
+          settings: settingsRef.current
         });
         return;
       }
@@ -162,7 +180,8 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       const notificationIds = await notificationService.scheduleTask(updatedBase);
       await persist({
         tasks: tasks.map((task) => (task.id === id ? { ...updatedBase, ...notificationIds } : task)),
-        chatHistory
+        chatHistory,
+        settings: settingsRef.current
       });
     },
     [chatHistory, persist, tasks]
@@ -183,7 +202,8 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       const notificationIds = await notificationService.scheduleTask(updatedBase);
       await persist({
         tasks: tasks.map((task) => (task.id === id ? { ...updatedBase, ...notificationIds } : task)),
-        chatHistory
+        chatHistory,
+        settings: settingsRef.current
       });
     },
     [chatHistory, persist, tasks]
@@ -215,17 +235,30 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       const nextHistory = [...chatHistoryRef.current, nextMessage];
       await persist({
         tasks: tasksRef.current,
-        chatHistory: nextHistory
+        chatHistory: nextHistory,
+        settings: settingsRef.current
       });
       return nextMessage;
     },
     [persist]
   );
 
+  const completeOnboarding = useCallback(async () => {
+    await persist({
+      tasks: tasksRef.current,
+      chatHistory: chatHistoryRef.current,
+      settings: {
+        ...settingsRef.current,
+        hasCompletedOnboarding: true
+      }
+    });
+  }, [persist]);
+
   const value = useMemo<ContextValue>(
     () => ({
       tasks,
       chatHistory,
+      settings,
       hydrated,
       activeAlarmTaskId,
       addTask,
@@ -236,6 +269,7 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       dismissTaskAlarm,
       snoozeTaskAlarm,
       addChatMessage,
+      completeOnboarding,
       setActiveAlarmTaskIdFromNotification: setActiveAlarmTaskId
     }),
     [
@@ -246,10 +280,12 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       deleteTask,
       dismissTaskAlarm,
       hydrated,
+      settings,
       snoozeTaskAlarm,
       tasks,
       toggleTaskAlarm,
       toggleTaskCompletion,
+      completeOnboarding,
       updateTask
     ]
   );
