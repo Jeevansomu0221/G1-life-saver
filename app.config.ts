@@ -1,5 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
+const renderProxyUrl = "https://g1-life-saver.onrender.com/api/krishna-guide";
+
 const config: ExpoConfig = {
   name: "Krsna AI",
   slug: "krsna-ai",
@@ -22,7 +24,7 @@ const config: ExpoConfig = {
     eas: {
       projectId: "b1f61d46-454c-4e09-8640-94d3696a7dfb"
     },
-    aiProxyUrl: process.env.EXPO_PUBLIC_AI_PROXY_URL ?? "",
+    aiProxyUrl: process.env.EXPO_PUBLIC_AI_PROXY_URL ?? renderProxyUrl,
     aiModel: process.env.EXPO_PUBLIC_AI_MODEL ?? "gemini-2.5-flash-lite",
     geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "",
     openAIApiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? ""

@@ -2,6 +2,8 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { ChatMessage } from "@/types/domain";
 
+const productionProxyUrl = "https://g1-life-saver.onrender.com/api/krishna-guide";
+
 function extractMessage(payload: any) {
   if (typeof payload?.message === "string") {
     return payload.message;
@@ -218,6 +220,10 @@ function resolveProxyUrl() {
   const configuredUrl = Constants.expoConfig?.extra?.aiProxyUrl;
   if (configuredUrl) {
     return configuredUrl;
+  }
+
+  if (!__DEV__) {
+    return productionProxyUrl;
   }
 
   const runtimeHost =
