@@ -10,7 +10,18 @@ const config: ExpoConfig = {
   scheme: "krsnaai",
   userInterfaceStyle: "dark",
   assetBundlePatterns: ["**/*"],
-  plugins: ["expo-notifications"],
+  plugins: [
+    "expo-notifications",
+    "expo-iap",
+    [
+      "expo-build-properties",
+      {
+        android: {
+          kotlinVersion: "2.0.21"
+        }
+      }
+    ]
+  ],
   icon: "./assets/krsna-ai-icon.png",
   android: {
     package: "com.krsnaai.app",
@@ -26,8 +37,8 @@ const config: ExpoConfig = {
     },
     aiProxyUrl: process.env.EXPO_PUBLIC_AI_PROXY_URL ?? renderProxyUrl,
     aiModel: process.env.EXPO_PUBLIC_AI_MODEL ?? "gemini-2.5-flash-lite",
-    geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "",
-    openAIApiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? ""
+    geminiApiKey: "",
+    openAIApiKey: ""
   }
 };
 

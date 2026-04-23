@@ -2,9 +2,11 @@ import React from "react";
 import { ActivityIndicator, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { TasksAlarmsScreen } from "@/screens/TasksAlarmsScreen";
+import { BhagvadgitaDailyScreen } from "@/screens/BhagvadgitaDailyScreen";
+import { HomeScreen } from "@/screens/HomeScreen";
+import { PredictMyFutureScreen } from "@/screens/PredictMyFutureScreen";
 import { KrishnaAIGuideScreen } from "@/screens/KrishnaAIGuideScreen";
-import { WelcomeScreen } from "@/screens/WelcomeScreen";
+import { WhatWillHappenTodayScreen } from "@/screens/WhatWillHappenTodayScreen";
 import { useAppData } from "@/state/AppDataContext";
 import { RootStackParamList, RootTabParamList } from "@/types/navigation";
 import { colors } from "@/theme/colors";
@@ -45,8 +47,8 @@ function MainTabs() {
       }}
     >
       <Tab.Screen
-        name="Tasks"
-        component={TasksAlarmsScreen}
+        name="Home"
+        component={HomeScreen}
         options={{
           tabBarIcon: ({ focused, color }) => <Dot focused={focused} tint={color} />
         }}
@@ -63,7 +65,7 @@ function MainTabs() {
 }
 
 export function RootNavigator() {
-  const { settings, hydrated } = useAppData();
+  const { hydrated } = useAppData();
 
   if (!hydrated) {
     return (
@@ -75,7 +77,7 @@ export function RootNavigator() {
 
   return (
     <Stack.Navigator
-      initialRouteName={settings.hasCompletedOnboarding ? "MainTabs" : "Welcome"}
+      initialRouteName="MainTabs"
       screenOptions={{
         contentStyle: {
           backgroundColor: colors.background
@@ -90,10 +92,10 @@ export function RootNavigator() {
         }
       }}
     >
-      {!settings.hasCompletedOnboarding ? (
-        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-      ) : null}
       <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="Predict My Future" component={PredictMyFutureScreen} />
+      <Stack.Screen name="Bhagvadgita Daily" component={BhagvadgitaDailyScreen} />
+      <Stack.Screen name="Wt Will Happen Today" component={WhatWillHappenTodayScreen} />
     </Stack.Navigator>
   );
 }

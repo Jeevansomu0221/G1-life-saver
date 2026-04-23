@@ -10,6 +10,9 @@ type TaskInput = Omit<Task, "id" | "createdAt" | "reminderNotificationId" | "ala
 type ContextValue = AppStorageShape & {
   hydrated: boolean;
   activeAlarmTaskId?: string;
+  aiMessageLimit: number;
+  aiMessagesRemaining: number;
+  canSendAiMessage: boolean;
   addTask: (task: TaskInput) => Promise<void>;
   updateTask: (id: string, updates: TaskInput) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
@@ -18,17 +21,46 @@ type ContextValue = AppStorageShape & {
   dismissTaskAlarm: (id: string) => Promise<void>;
   snoozeTaskAlarm: (id: string) => Promise<void>;
   addChatMessage: (message: Omit<ChatMessage, "id" | "createdAt">) => Promise<ChatMessage>;
+  recordAiMessageUse: () => Promise<void>;
+  activatePlusPlan: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
+  markGitaDailyReading: () => Promise<void>;
   setActiveAlarmTaskIdFromNotification: (id?: string) => void;
 };
 
 const AppDataContext = createContext<ContextValue | null>(null);
+const FREE_AI_MESSAGE_LIMIT = 20;
+const PLUS_AI_MESSAGE_LIMIT = 200;
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function normalizeAiUsage(settings: UserSettings) {
+  const currentDate = todayKey();
+  if (settings.aiUsage.date === currentDate) {
+    return settings.aiUsage;
+  }
+  return {
+    date: currentDate,
+    messagesUsed: 0
+  };
+}
 
 export function AppDataProvider({ children }: PropsWithChildren) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [settings, setSettings] = useState<UserSettings>({
-    hasCompletedOnboarding: false
+    hasCompletedOnboarding: false,
+    aiPlan: "free",
+    aiUsage: {
+      date: todayKey(),
+      messagesUsed: 0
+    },
+    gitaDaily: {
+      streakCount: 0,
+      totalReadSlokas: 0
+    }
   });
   const [hydrated, setHydrated] = useState(false);
   const [activeAlarmTaskId, setActiveAlarmTaskId] = useState<string>();
@@ -71,7 +103,10 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       const nextState = {
         tasks: hydratedTasks,
         chatHistory: loaded.chatHistory,
-        settings: loaded.settings
+        settings: {
+          ...loaded.settings,
+          aiUsage: normalizeAiUsage(loaded.settings)
+        }
       };
 
       tasksRef.current = nextState.tasks;
@@ -243,6 +278,33 @@ export function AppDataProvider({ children }: PropsWithChildren) {
     [persist]
   );
 
+  const recordAiMessageUse = useCallback(async () => {
+    const nextUsage = normalizeAiUsage(settingsRef.current);
+    await persist({
+      tasks: tasksRef.current,
+      chatHistory: chatHistoryRef.current,
+      settings: {
+        ...settingsRef.current,
+        aiUsage: {
+          date: nextUsage.date,
+          messagesUsed: nextUsage.messagesUsed + 1
+        }
+      }
+    });
+  }, [persist]);
+
+  const activatePlusPlan = useCallback(async () => {
+    await persist({
+      tasks: tasksRef.current,
+      chatHistory: chatHistoryRef.current,
+      settings: {
+        ...settingsRef.current,
+        aiPlan: "plus",
+        aiUsage: normalizeAiUsage(settingsRef.current)
+      }
+    });
+  }, [persist]);
+
   const completeOnboarding = useCallback(async () => {
     await persist({
       tasks: tasksRef.current,
@@ -254,6 +316,40 @@ export function AppDataProvider({ children }: PropsWithChildren) {
     });
   }, [persist]);
 
+  const markGitaDailyReading = useCallback(async () => {
+    const today = new Date();
+    const todayKey = today.toISOString().slice(0, 10);
+
+    if (settingsRef.current.gitaDaily.lastReadDate === todayKey) {
+      return;
+    }
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = yesterday.toISOString().slice(0, 10);
+
+    const nextStreak =
+      settingsRef.current.gitaDaily.lastReadDate === yesterdayKey ? settingsRef.current.gitaDaily.streakCount + 1 : 1;
+
+    await persist({
+      tasks: tasksRef.current,
+      chatHistory: chatHistoryRef.current,
+      settings: {
+        ...settingsRef.current,
+        gitaDaily: {
+          streakCount: nextStreak,
+          lastReadDate: todayKey,
+          totalReadSlokas: settingsRef.current.gitaDaily.totalReadSlokas + 1
+        }
+      }
+    });
+  }, [persist]);
+
+  const normalizedUsage = normalizeAiUsage(settings);
+  const aiMessageLimit = settings.aiPlan === "plus" ? PLUS_AI_MESSAGE_LIMIT : FREE_AI_MESSAGE_LIMIT;
+  const aiMessagesRemaining = Math.max(0, aiMessageLimit - normalizedUsage.messagesUsed);
+  const canSendAiMessage = aiMessagesRemaining > 0;
+
   const value = useMemo<ContextValue>(
     () => ({
       tasks,
@@ -261,6 +357,9 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       settings,
       hydrated,
       activeAlarmTaskId,
+      aiMessageLimit,
+      aiMessagesRemaining,
+      canSendAiMessage,
       addTask,
       updateTask,
       deleteTask,
@@ -269,13 +368,20 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       dismissTaskAlarm,
       snoozeTaskAlarm,
       addChatMessage,
+      recordAiMessageUse,
+      activatePlusPlan,
       completeOnboarding,
+      markGitaDailyReading,
       setActiveAlarmTaskIdFromNotification: setActiveAlarmTaskId
     }),
     [
       activeAlarmTaskId,
+      activatePlusPlan,
       addChatMessage,
       addTask,
+      aiMessageLimit,
+      aiMessagesRemaining,
+      canSendAiMessage,
       chatHistory,
       deleteTask,
       dismissTaskAlarm,
@@ -286,6 +392,8 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       toggleTaskAlarm,
       toggleTaskCompletion,
       completeOnboarding,
+      markGitaDailyReading,
+      recordAiMessageUse,
       updateTask
     ]
   );

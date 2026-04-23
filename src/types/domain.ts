@@ -30,6 +30,16 @@ export type ChatMessage = {
 
 export type UserSettings = {
   hasCompletedOnboarding: boolean;
+  aiPlan: "free" | "plus";
+  aiUsage: {
+    date: string;
+    messagesUsed: number;
+  };
+  gitaDaily: {
+    streakCount: number;
+    lastReadDate?: string;
+    totalReadSlokas: number;
+  };
 };
 
 export type AppStorageShape = {

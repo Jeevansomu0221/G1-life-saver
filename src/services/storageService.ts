@@ -7,7 +7,16 @@ const emptyState: AppStorageShape = {
   tasks: [],
   chatHistory: [],
   settings: {
-    hasCompletedOnboarding: false
+    hasCompletedOnboarding: false,
+    aiPlan: "free",
+    aiUsage: {
+      date: new Date().toISOString().slice(0, 10),
+      messagesUsed: 0
+    },
+    gitaDaily: {
+      streakCount: 0,
+      totalReadSlokas: 0
+    }
   }
 };
 
@@ -19,7 +28,23 @@ export const storageService = {
     }
 
     try {
-      return { ...emptyState, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw) as Partial<AppStorageShape>;
+      return {
+        ...emptyState,
+        ...parsed,
+        settings: {
+          ...emptyState.settings,
+          ...parsed.settings,
+          aiUsage: {
+            ...emptyState.settings.aiUsage,
+            ...(parsed.settings?.aiUsage ?? {})
+          },
+          gitaDaily: {
+            ...emptyState.settings.gitaDaily,
+            ...(parsed.settings?.gitaDaily ?? {})
+          }
+        }
+      };
     } catch {
       return emptyState;
     }

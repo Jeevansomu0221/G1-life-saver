@@ -138,10 +138,11 @@ app.get("/health", (_req, res) => {
 
 app.post("/api/krishna-guide", async (req, res) => {
   const { systemPrompt, messages } = req.body || {};
+  const dailyPredictionMode = typeof systemPrompt === "string" && systemPrompt.includes("DAILY_PREDICTION_MODE");
   const latestUserMessage = Array.isArray(messages)
     ? [...messages].reverse().find((message) => message && message.role === "user")?.content
     : "";
-  const knowledgeContext = buildKnowledgeContext(latestUserMessage);
+  const knowledgeContext = dailyPredictionMode ? "" : buildKnowledgeContext(latestUserMessage);
 
   try {
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -163,7 +164,9 @@ app.post("/api/krishna-guide", async (req, res) => {
             systemInstruction: {
               parts: [
                 {
-                  text: `${typeof systemPrompt === "string" && systemPrompt.trim() ? systemPrompt : defaultSystemPrompt}
+                  text: dailyPredictionMode
+                    ? systemPrompt
+                    : `${typeof systemPrompt === "string" && systemPrompt.trim() ? systemPrompt : defaultSystemPrompt}
 
 Grounding instructions:
 - Use the Krishna knowledge context below whenever it is relevant.
@@ -181,8 +184,8 @@ ${knowledgeContext || "No direct scripture match was retrieved for this question
               ]
             },
             generationConfig: {
-              maxOutputTokens: 120,
-              temperature: 0.7
+              maxOutputTokens: dailyPredictionMode ? 280 : 120,
+              temperature: dailyPredictionMode ? 0.85 : 0.7
             },
             contents: messages.map((message) => ({
               role: message.role === "assistant" ? "model" : "user",
@@ -217,7 +220,9 @@ ${knowledgeContext || "No direct scripture match was retrieved for this question
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await client.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      instructions: `${typeof systemPrompt === "string" && systemPrompt.trim() ? systemPrompt : defaultSystemPrompt}
+      instructions: dailyPredictionMode
+        ? systemPrompt
+        : `${typeof systemPrompt === "string" && systemPrompt.trim() ? systemPrompt : defaultSystemPrompt}
 
 Grounding instructions:
 - Use the Krishna knowledge context below whenever it is relevant.
@@ -228,7 +233,7 @@ Grounding instructions:
 
 Krishna knowledge context:
 ${knowledgeContext || "No direct scripture match was retrieved for this question. Answer with Krishna-like wisdom carefully and without inventing citations."}`,
-      max_output_tokens: 120,
+      max_output_tokens: dailyPredictionMode ? 280 : 120,
       input: messages.map((message) => ({
         role: message.role === "assistant" ? "assistant" : "user",
         content: [{ type: "input_text", text: String(message.content ?? "") }]

@@ -46,9 +46,9 @@ function AppShell() {
       const data = response.notification.request.content.data;
       if (data?.type === "task-alarm" && data?.taskId) {
         setActiveAlarmTaskIdFromNotification(String(data.taskId));
-        navigationRef.navigate("MainTabs", { screen: "Tasks", params: { focusType: "tasks" } });
+        navigationRef.navigate("MainTabs", { screen: "Home" });
       } else if (data?.type === "task") {
-        navigationRef.navigate("MainTabs", { screen: "Tasks", params: { focusType: "tasks" } });
+        navigationRef.navigate("MainTabs", { screen: "Home" });
       }
     });
 

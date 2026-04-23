@@ -41,6 +41,121 @@ function extractMessage(payload: any) {
 }
 
 export const aiService = {
+  async getTodayPrediction(dateLabel: string) {
+    const systemPrompt = buildTodayPredictionSystemPrompt();
+    const userMessage = `Create today's prediction for ${dateLabel}.`;
+    const proxyUrl = resolveProxyUrl();
+
+    if (proxyUrl) {
+      try {
+        const response = await fetchWithRetry(proxyUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            systemPrompt,
+            messages: [{ role: "user", content: userMessage }]
+          })
+        });
+
+        if (response.ok) {
+          const payload = await response.json();
+          const message = extractMessage(payload);
+          if (message) {
+            return message;
+          }
+        }
+      } catch {
+        // Fall through only in development auto mode.
+      }
+    }
+
+    if (!__DEV__) {
+      throw new Error("The daily prediction AI backend could not be reached.");
+    }
+
+    const geminiApiKey = Constants.expoConfig?.extra?.geminiApiKey;
+    const model = Constants.expoConfig?.extra?.aiModel ?? "gemini-2.5-flash-lite";
+
+    if (geminiApiKey) {
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }]
+            },
+            generationConfig: {
+              maxOutputTokens: 280,
+              temperature: 0.85
+            },
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: userMessage }]
+              }
+            ]
+          })
+        }
+      );
+
+      if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text().catch(() => "");
+        throw new Error(`Gemini direct mode failed (${geminiResponse.status}). ${errorText || "No error body returned."}`);
+      }
+
+      const payload = await geminiResponse.json();
+      const geminiMessage = payload?.candidates?.[0]?.content?.parts?.map((part: any) => part?.text).filter(Boolean).join("\n");
+      if (geminiMessage) {
+        return geminiMessage;
+      }
+
+      throw new Error("Gemini direct mode returned an unexpected response.");
+    }
+
+    const directApiKey = Constants.expoConfig?.extra?.openAIApiKey;
+    if (!directApiKey) {
+      throw new Error("The daily prediction AI service could not be reached.");
+    }
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${directApiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        instructions: systemPrompt,
+        max_output_tokens: 280,
+        input: [
+          {
+            role: "user",
+            content: [{ type: "input_text", text: userMessage }]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(`OpenAI direct mode failed (${response.status}). ${errorText || "No error body returned."}`);
+    }
+
+    const payload = await response.json();
+    const message = extractMessage(payload);
+    if (!message) {
+      throw new Error("The daily prediction AI service returned an unexpected response.");
+    }
+
+    return message;
+  },
+
   async askKrishna(history: ChatMessage[], userMessage: string) {
     const systemPrompt = buildSystemPrompt();
     const proxyUrl = resolveProxyUrl();
@@ -195,6 +310,25 @@ export const aiService = {
 
 function buildSystemPrompt() {
   return "You are Lord Krsna speaking as a serene, wise, compassionate guide. Draw primarily from the Bhagavad Gita, and when relevant from the Srimad Bhagavatam and Krsna's life in the Mahabharata tradition. Teach dharma, disciplined action, devotion, clarity of mind, fearlessness, and detachment from results. Be warm, natural, and conversational without losing dignity. If the user writes in English, reply in English. If the user writes in Telugu using English letters, reply naturally in Telugu using English letters. Do not switch from English into Telugu unless the user clearly started in Telugu or asked for Telugu. Keep replies short, usually 1 to 3 brief lines. Use the name Krsna. At most use 1 or 2 gentle emojis when they truly fit.";
+}
+
+function buildTodayPredictionSystemPrompt() {
+  return `DAILY_PREDICTION_MODE
+You create a fun, reflective "what may happen today" reading for a mobile app.
+The answer must feel specific and natural, but do not claim certainty or supernatural proof.
+Use this exact shape:
+Your "Today" Prediction
+Date: <date from user>
+Morning: <one practical prediction>
+Midday: <one practical prediction>
+Afternoon: <one practical prediction>
+Evening: <one practical prediction>
+Night: <one practical prediction>
+
+Wildcard Possibility
+<one short paragraph about an unplanned but minor possibility>
+
+Keep it warm, realistic, and easy to read. Avoid medical, legal, financial, crisis, or dangerous advice.`;
 }
 
 async function fetchWithRetry(url: string, init: RequestInit, retries = 2) {

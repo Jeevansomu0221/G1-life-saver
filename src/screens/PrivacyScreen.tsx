@@ -20,8 +20,15 @@ export function PrivacyScreen() {
         </Text>
       </SectionCard>
 
+      <SectionCard title="AI credits and payments" subtitle="Gemini and Google Play Billing">
+        <Text style={styles.body}>
+          Krsna AI uses Gemini-backed AI responses through the configured backend. Free users get 20 AI messages per day.
+          G1 Plus is planned at Rs 49/month and gives 200 AI messages per day through Google Play Billing.
+        </Text>
+      </SectionCard>
+
       <SectionCard title="Recommended before launch" subtitle="Production checklist">
-        <Text style={styles.body}>Rotate all exposed API keys, host the AI backend securely, publish a real privacy policy URL, and review notification permission wording for Android 13 and newer.</Text>
+        <Text style={styles.body}>Rotate all exposed API keys, host the AI backend securely, validate Play purchases on the backend, publish a real privacy policy URL, and review notification permission wording for Android 13 and newer.</Text>
       </SectionCard>
 
       <SectionCard title="User expectation" subtitle="Plain-language disclosure">
