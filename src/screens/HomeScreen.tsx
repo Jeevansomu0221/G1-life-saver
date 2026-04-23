@@ -135,6 +135,10 @@ export function HomeScreen() {
           ))
         )}
       </View>
+
+      <Pressable style={styles.policyLink} onPress={() => navigation.navigate("Privacy & AI Policy")}>
+        <Text style={styles.policyText}>Privacy & AI Policy</Text>
+      </Pressable>
     </Screen>
   );
 }
@@ -301,5 +305,14 @@ const styles = StyleSheet.create({
   },
   overdueText: {
     color: colors.warning
+  },
+  policyLink: {
+    alignItems: "center",
+    paddingVertical: 14
+  },
+  policyText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "700"
   }
 });

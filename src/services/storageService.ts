@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppStorageShape } from "@/types/domain";
 
-const STORAGE_KEY = "g1-life-saver-storage";
+const STORAGE_KEY = "krsna-ai-storage";
 
 const emptyState: AppStorageShape = {
   tasks: [],

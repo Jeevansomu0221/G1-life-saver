@@ -1,3 +1,3 @@
 export const notificationLinking = {
-  prefixes: ["g1lifesaver://"]
+  prefixes: ["krsnaai://"]
 };

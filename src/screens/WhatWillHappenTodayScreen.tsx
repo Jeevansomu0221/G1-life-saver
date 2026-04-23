@@ -6,7 +6,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { aiService } from "@/services/aiService";
 import { colors } from "@/theme/colors";
 
-const TODAY_PREDICTION_STORAGE_KEY = "g1-life-saver-today-prediction";
+const TODAY_PREDICTION_STORAGE_KEY = "krsna-ai-today-prediction";
 
 type StoredTodayPrediction = {
   dateKey: string;

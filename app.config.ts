@@ -10,18 +10,7 @@ const config: ExpoConfig = {
   scheme: "krsnaai",
   userInterfaceStyle: "dark",
   assetBundlePatterns: ["**/*"],
-  plugins: [
-    "expo-notifications",
-    "expo-iap",
-    [
-      "expo-build-properties",
-      {
-        android: {
-          kotlinVersion: "2.0.21"
-        }
-      }
-    ]
-  ],
+  plugins: ["expo-notifications"],
   icon: "./assets/krsna-ai-icon.png",
   android: {
     package: "com.krsnaai.app",

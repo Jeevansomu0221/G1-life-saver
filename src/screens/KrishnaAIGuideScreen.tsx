@@ -14,11 +14,9 @@ import {
   TextInput,
   View
 } from "react-native";
-import { useIAP } from "expo-iap";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { aiService } from "@/services/aiService";
-import { PLUS_SUBSCRIPTION_ID } from "@/services/billingService";
 import { useAppData } from "@/state/AppDataContext";
 import { colors } from "@/theme/colors";
 
@@ -70,6 +68,14 @@ function splitReplyIntoMessages(text: string) {
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatPlanSubtitle(remaining: number) {
+  if (remaining <= 5) {
+    return `${remaining} free chats left today`;
+  }
+
+  return "Free daily access active";
 }
 
 function TypingDots() {
@@ -125,41 +131,14 @@ export function KrishnaAIGuideScreen() {
     chatHistory,
     addChatMessage,
     recordAiMessageUse,
-    activatePlusPlan,
-    aiMessageLimit,
     aiMessagesRemaining,
     canSendAiMessage,
-    settings
   } = useAppData();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [billingLoading, setBillingLoading] = useState(false);
-  const [billingError, setBillingError] = useState<string>();
+  const [limitOpen, setLimitOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
-  const {
-    connected,
-    subscriptions,
-    fetchProducts,
-    requestPurchase,
-    finishTransaction,
-    hasActiveSubscriptions
-  } = useIAP({
-    onPurchaseSuccess: async (purchase) => {
-      if (purchase.productId !== PLUS_SUBSCRIPTION_ID) {
-        return;
-      }
-      await activatePlusPlan();
-      await finishTransaction({ purchase, isConsumable: false });
-      setUpgradeOpen(false);
-      setBillingLoading(false);
-    },
-    onPurchaseError: (error) => {
-      setBillingError(error.message || "Purchase could not be completed.");
-      setBillingLoading(false);
-    }
-  });
 
   const conversation = useMemo(
     () =>
@@ -183,19 +162,12 @@ export function KrishnaAIGuideScreen() {
     return () => clearTimeout(id);
   }, [conversation, loading]);
 
-  useEffect(() => {
-    if (!connected) return;
-    fetchProducts({ skus: [PLUS_SUBSCRIPTION_ID], type: "subs" }).catch((error) => {
-      setBillingError(error instanceof Error ? error.message : "Could not load subscription details.");
-    });
-  }, [connected, fetchProducts]);
-
   const submitMessage = async () => {
     const content = input.trim();
     if (!content || loading) return;
 
     if (!canSendAiMessage) {
-      setUpgradeOpen(true);
+      setLimitOpen(true);
       return;
     }
 
@@ -224,54 +196,6 @@ export function KrishnaAIGuideScreen() {
     }
   };
 
-  const purchasePlus = async () => {
-    setBillingLoading(true);
-    setBillingError(undefined);
-    try {
-      const subscription = subscriptions.find((item) => item.id === PLUS_SUBSCRIPTION_ID);
-      if (!subscription) {
-        throw new Error("G1 Plus is not available yet. Check that g1_plus_monthly is active in Play Console.");
-      }
-      const offer = subscription?.platform === "android" ? subscription.subscriptionOfferDetailsAndroid?.[0] : undefined;
-      if (Platform.OS === "android" && !offer) {
-        throw new Error("G1 Plus has no active Google Play subscription offer yet.");
-      }
-      await requestPurchase({
-        request: {
-          apple: {
-            sku: PLUS_SUBSCRIPTION_ID
-          },
-          google: {
-            skus: [PLUS_SUBSCRIPTION_ID],
-            subscriptionOffers: offer ? [{ sku: PLUS_SUBSCRIPTION_ID, offerToken: offer.offerToken }] : []
-          }
-        },
-        type: "subs"
-      });
-    } catch (error) {
-      setBillingError(error instanceof Error ? error.message : "Purchase could not be started.");
-      setBillingLoading(false);
-    }
-  };
-
-  const restorePurchases = async () => {
-    setBillingLoading(true);
-    setBillingError(undefined);
-    try {
-      const hasPlus = await hasActiveSubscriptions([PLUS_SUBSCRIPTION_ID]);
-      if (!hasPlus) {
-        setBillingError("No active G1 Plus subscription was found on this Google Play account.");
-        return;
-      }
-      await activatePlusPlan();
-      setUpgradeOpen(false);
-    } catch (error) {
-      setBillingError(error instanceof Error ? error.message : "Restore could not be completed.");
-    } finally {
-      setBillingLoading(false);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -284,11 +208,11 @@ export function KrishnaAIGuideScreen() {
             <View>
               <Text style={styles.headerTitle}>Krsna AI</Text>
               <Text style={styles.headerSubtitle}>
-                {settings.aiPlan === "plus" ? "G1 Plus" : "Free"} - {aiMessagesRemaining}/{aiMessageLimit} messages left today
+                {formatPlanSubtitle(aiMessagesRemaining)}
               </Text>
             </View>
             <View style={styles.statusPill}>
-              <Text style={styles.statusText}>{settings.aiPlan === "plus" ? "Plus" : "Free"}</Text>
+              <Text style={styles.statusText}>Free</Text>
             </View>
           </View>
         </LinearGradient>
@@ -354,31 +278,15 @@ export function KrishnaAIGuideScreen() {
           </Pressable>
         </View>
 
-        <Modal visible={upgradeOpen} transparent animationType="fade" onRequestClose={() => setUpgradeOpen(false)}>
+        <Modal visible={limitOpen} transparent animationType="fade" onRequestClose={() => setLimitOpen(false)}>
           <View style={styles.modalBackdrop}>
-            <View style={styles.upgradeCard}>
-              <Text style={styles.upgradeTitle}>G1 Plus</Text>
-              <Text style={styles.upgradePrice}>Rs 49/month</Text>
-              <Text style={styles.upgradeBody}>
-                Free users get 20 Krsna AI messages per day. G1 Plus gives you 200 messages per day for deeper daily guidance.
+            <View style={styles.limitCard}>
+              <Text style={styles.limitTitle}>Daily AI access finished</Text>
+              <Text style={styles.limitBody}>
+                Your free Krsna AI chats for today are complete. Please come back tomorrow and your daily access will reset automatically.
               </Text>
-              <View style={styles.planRow}>
-                <Text style={styles.planText}>Free</Text>
-                <Text style={styles.planValue}>20/day</Text>
-              </View>
-              <View style={styles.planRow}>
-                <Text style={styles.planText}>G1 Plus</Text>
-                <Text style={styles.planValue}>200/day</Text>
-              </View>
-              {billingError ? <Text style={styles.billingError}>{billingError}</Text> : null}
-              <Pressable style={[styles.upgradeButton, billingLoading && styles.sendButtonDisabled]} onPress={purchasePlus} disabled={billingLoading}>
-                {billingLoading ? <ActivityIndicator color="#231708" size="small" /> : <Text style={styles.upgradeButtonText}>Upgrade with Google Play</Text>}
-              </Pressable>
-              <Pressable style={styles.restoreButton} onPress={restorePurchases} disabled={billingLoading}>
-                <Text style={styles.restoreText}>Restore purchase</Text>
-              </Pressable>
-              <Pressable style={styles.closeButton} onPress={() => setUpgradeOpen(false)} disabled={billingLoading}>
-                <Text style={styles.closeText}>Not now</Text>
+              <Pressable style={styles.limitButton} onPress={() => setLimitOpen(false)}>
+                <Text style={styles.limitButtonText}>Okay</Text>
               </Pressable>
             </View>
           </View>
@@ -563,7 +471,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.62)",
     padding: 18
   },
-  upgradeCard: {
+  limitCard: {
     width: "100%",
     maxWidth: 420,
     backgroundColor: colors.panel,
@@ -572,49 +480,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16
   },
-  upgradeTitle: {
+  limitTitle: {
     color: colors.text,
     fontSize: 22,
     fontWeight: "900"
   },
-  upgradePrice: {
-    color: colors.gold,
-    fontSize: 16,
-    fontWeight: "900",
-    marginTop: 4
-  },
-  upgradeBody: {
+  limitBody: {
     color: colors.textMuted,
     fontSize: 13,
     lineHeight: 19,
-    marginTop: 10,
-    marginBottom: 12
+    marginTop: 10
   },
-  planRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingVertical: 9
-  },
-  planText: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  planValue: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: "700"
-  },
-  billingError: {
-    color: "#FFB4B4",
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 8
-  },
-  upgradeButton: {
+  limitButton: {
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
@@ -622,27 +499,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 12
   },
-  upgradeButtonText: {
+  limitButtonText: {
     color: "#231708",
     fontSize: 13,
     fontWeight: "900"
-  },
-  restoreButton: {
-    alignItems: "center",
-    paddingVertical: 12
-  },
-  restoreText: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: "800"
-  },
-  closeButton: {
-    alignItems: "center",
-    paddingTop: 2
-  },
-  closeText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "700"
   }
 });

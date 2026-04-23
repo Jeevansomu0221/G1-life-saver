@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BhagvadgitaDailyScreen } from "@/screens/BhagvadgitaDailyScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { PredictMyFutureScreen } from "@/screens/PredictMyFutureScreen";
+import { PrivacyScreen } from "@/screens/PrivacyScreen";
 import { KrishnaAIGuideScreen } from "@/screens/KrishnaAIGuideScreen";
 import { WhatWillHappenTodayScreen } from "@/screens/WhatWillHappenTodayScreen";
 import { useAppData } from "@/state/AppDataContext";
@@ -96,6 +97,7 @@ export function RootNavigator() {
       <Stack.Screen name="Predict My Future" component={PredictMyFutureScreen} />
       <Stack.Screen name="Bhagvadgita Daily" component={BhagvadgitaDailyScreen} />
       <Stack.Screen name="Wt Will Happen Today" component={WhatWillHappenTodayScreen} />
+      <Stack.Screen name="Privacy & AI Policy" component={PrivacyScreen} />
     </Stack.Navigator>
   );
 }

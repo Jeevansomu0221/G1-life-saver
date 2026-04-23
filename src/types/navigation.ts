@@ -10,4 +10,5 @@ export type RootStackParamList = {
   "Predict My Future": undefined;
   "Bhagvadgita Daily": undefined;
   "Wt Will Happen Today": undefined;
+  "Privacy & AI Policy": undefined;
 };

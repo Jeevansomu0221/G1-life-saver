@@ -22,7 +22,6 @@ type ContextValue = AppStorageShape & {
   snoozeTaskAlarm: (id: string) => Promise<void>;
   addChatMessage: (message: Omit<ChatMessage, "id" | "createdAt">) => Promise<ChatMessage>;
   recordAiMessageUse: () => Promise<void>;
-  activatePlusPlan: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
   markGitaDailyReading: () => Promise<void>;
   setActiveAlarmTaskIdFromNotification: (id?: string) => void;
@@ -293,18 +292,6 @@ export function AppDataProvider({ children }: PropsWithChildren) {
     });
   }, [persist]);
 
-  const activatePlusPlan = useCallback(async () => {
-    await persist({
-      tasks: tasksRef.current,
-      chatHistory: chatHistoryRef.current,
-      settings: {
-        ...settingsRef.current,
-        aiPlan: "plus",
-        aiUsage: normalizeAiUsage(settingsRef.current)
-      }
-    });
-  }, [persist]);
-
   const completeOnboarding = useCallback(async () => {
     await persist({
       tasks: tasksRef.current,
@@ -369,14 +356,12 @@ export function AppDataProvider({ children }: PropsWithChildren) {
       snoozeTaskAlarm,
       addChatMessage,
       recordAiMessageUse,
-      activatePlusPlan,
       completeOnboarding,
       markGitaDailyReading,
       setActiveAlarmTaskIdFromNotification: setActiveAlarmTaskId
     }),
     [
       activeAlarmTaskId,
-      activatePlusPlan,
       addChatMessage,
       addTask,
       aiMessageLimit,
