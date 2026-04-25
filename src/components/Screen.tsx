@@ -6,12 +6,15 @@ import { colors } from "@/theme/colors";
 type Props = PropsWithChildren<{
   scroll?: boolean;
   contentStyle?: ViewStyle;
+  topSafeArea?: boolean;
 }>;
 
-export function Screen({ children, scroll = true, contentStyle }: Props) {
+export function Screen({ children, scroll = true, contentStyle, topSafeArea = false }: Props) {
+  const safeAreaEdges = topSafeArea ? ["top", "left", "right", "bottom"] as const : ["left", "right", "bottom"] as const;
+
   if (scroll) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={safeAreaEdges}>
         <ScrollView style={styles.container} contentContainerStyle={[styles.content, contentStyle]}>
           {children}
         </ScrollView>
@@ -20,7 +23,7 @@ export function Screen({ children, scroll = true, contentStyle }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={safeAreaEdges}>
       <View style={[styles.container, styles.content, contentStyle]}>{children}</View>
     </SafeAreaView>
   );
@@ -35,7 +38,8 @@ const styles = StyleSheet.create({
     flex: 1
   },
   content: {
-    padding: 12,
-    paddingBottom: 16
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 6
   }
 });

@@ -13,6 +13,12 @@ type StoredTodayPrediction = {
   prediction: string;
 };
 
+type PredictionSection = {
+  key: string;
+  title: string;
+  body: string;
+};
+
 function formatDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -40,12 +46,44 @@ Wildcard Possibility
 There is a decent chance of something unplanned but minor happening, like a change in schedule, a surprise message, or a small opportunity.`;
 }
 
+function parsePrediction(prediction: string, todayLabel: string): PredictionSection[] {
+  const normalized = prediction.replace(/\r/g, "").trim();
+  const sectionPatterns = [
+    { title: "Morning", pattern: /Morning:\s*([\s\S]*?)(?=\n(?:Midday|Afternoon|Evening|Night|Wildcard Possibility):|\nWildcard Possibility|\s*$)/i },
+    { title: "Midday", pattern: /Midday:\s*([\s\S]*?)(?=\n(?:Afternoon|Evening|Night|Wildcard Possibility):|\nWildcard Possibility|\s*$)/i },
+    { title: "Afternoon", pattern: /Afternoon:\s*([\s\S]*?)(?=\n(?:Evening|Night|Wildcard Possibility):|\nWildcard Possibility|\s*$)/i },
+    { title: "Evening", pattern: /Evening:\s*([\s\S]*?)(?=\n(?:Night|Wildcard Possibility):|\nWildcard Possibility|\s*$)/i },
+    { title: "Night", pattern: /Night:\s*([\s\S]*?)(?=\nWildcard Possibility:|\nWildcard Possibility|\s*$)/i },
+    { title: "Wildcard Possibility", pattern: /Wildcard Possibility:?\s*([\s\S]*?)$/i }
+  ];
+
+  const extracted = sectionPatterns
+    .map(({ title, pattern }) => {
+      const match = normalized.match(pattern);
+      return match?.[1]?.trim() ? { key: title, title, body: match[1].trim() } : null;
+    })
+    .filter(Boolean) as PredictionSection[];
+
+  if (extracted.length > 0) {
+    return extracted;
+  }
+
+  return [
+    {
+      key: "today",
+      title: "Today",
+      body: normalized.replace(/^Your "Today" Prediction\s*/i, "").replace(new RegExp(`Date:\\s*${todayLabel}\\s*`, "i"), "").trim()
+    }
+  ];
+}
+
 export function WhatWillHappenTodayScreen() {
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => formatDateKey(today), [today]);
   const todayLabel = useMemo(() => formatTodayDate(today), [today]);
   const fallbackPrediction = useMemo(() => buildFallbackPrediction(todayLabel), [todayLabel]);
   const [prediction, setPrediction] = useState(fallbackPrediction);
+  const predictionSections = useMemo(() => parsePrediction(prediction, todayLabel), [prediction, todayLabel]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string>();
 
@@ -85,10 +123,11 @@ export function WhatWillHappenTodayScreen() {
 
   return (
     <Screen>
-      <Text style={styles.pageTitle}>Wt Will Happen Today</Text>
-      <Text style={styles.pageSubtitle}>AI-generated daily reading for {todayLabel}.</Text>
+      <View style={styles.datePill}>
+        <Text style={styles.datePillText}>{todayLabel}</Text>
+      </View>
 
-      <SectionCard title="Your Today Prediction" subtitle={todayLabel}>
+      <SectionCard title="Your Today Reading">
         {loading ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator color={colors.gold} size="small" />
@@ -96,12 +135,21 @@ export function WhatWillHappenTodayScreen() {
           </View>
         ) : null}
 
-        <Text style={styles.predictionText}>{prediction}</Text>
+        {!loading ? (
+          <View style={styles.sectionStack}>
+            {predictionSections.map((section) => (
+              <View key={section.key} style={styles.readingBlock}>
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+                <Text style={styles.predictionText}>{section.body}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         {loadError ? <Text style={styles.errorText}>Showing offline example. {loadError}</Text> : null}
       </SectionCard>
 
-      <SectionCard title="Important Note" subtitle="Please read this clearly">
+      <SectionCard title="Note">
         <Text style={styles.body}>
           This does not mean events will happen exactly as written. Treat this as insight, reflection, and a way to enter the day with greater awareness.
         </Text>
@@ -111,22 +159,42 @@ export function WhatWillHappenTodayScreen() {
 }
 
 const styles = StyleSheet.create({
-  pageTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: "800"
+  datePill: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(216,177,90,0.28)",
+    backgroundColor: "rgba(216,177,90,0.08)"
   },
-  pageSubtitle: {
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6,
-    marginBottom: 10
+  datePillText: {
+    color: colors.gold,
+    fontSize: 11,
+    fontWeight: "700"
   },
   body: {
     color: colors.textMuted,
     fontSize: 12,
     lineHeight: 18
+  },
+  sectionStack: {
+    gap: 10
+  },
+  readingBlock: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card
+  },
+  sectionTitle: {
+    color: colors.gold,
+    fontSize: 13,
+    fontWeight: "800",
+    marginBottom: 6
   },
   predictionText: {
     color: colors.text,

@@ -51,10 +51,7 @@ export function PredictMyFutureScreen() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
     >
       <Screen>
-        <Text style={styles.pageTitle}>Predict My Future</Text>
-        <Text style={styles.pageSubtitle}>Use your DOB or zodiac sign to generate a personal reading.</Text>
-
-        <SectionCard title="Your Inputs" subtitle="Simple details only">
+        <SectionCard title="Your Inputs">
           <Text style={styles.label}>Input Mode</Text>
           <SegmentedControl
             value={mode}
@@ -96,10 +93,14 @@ export function PredictMyFutureScreen() {
 
         {report ? (
           <>
-            <ReportSection title="Header" lines={[report.header]} />
+            <View style={styles.reportHero}>
+              <Text style={styles.reportHeroTitle}>{report.zodiacName} Reading</Text>
+              <Text style={styles.reportHeroText}>{report.header}</Text>
+            </View>
+
             <ReportSection
               title="Core Personality"
-              subtitle={report.nakshatraStyle}
+              eyebrow={report.nakshatraStyle}
               lines={[
                 `Outer personality: ${report.corePersonality.outer}`,
                 `Inner personality: ${report.corePersonality.inner}`,
@@ -107,27 +108,31 @@ export function PredictMyFutureScreen() {
                 `Hidden traits: ${report.corePersonality.hidden}`
               ]}
             />
+            <View style={styles.dualGrid}>
+              <InsightCard
+                title="Money"
+                accent={colors.gold}
+                items={[
+                  { label: "Rating", value: report.money.rating },
+                  { label: "Trend", value: report.money.earlyVsLater },
+                  { label: "Strength", value: report.money.strengthAreas },
+                  { label: "Warning", value: report.money.warning },
+                  { label: "Advice", value: report.money.advice }
+                ]}
+              />
+              <InsightCard
+                title="Career"
+                accent={colors.primary}
+                items={[
+                  { label: "Best fields", value: report.career.bestFields },
+                  { label: "Timeline", value: report.career.timeline },
+                  { label: "Growth", value: report.career.growthPattern },
+                  { label: "Key insight", value: report.career.keyInsight }
+                ]}
+              />
+            </View>
             <ReportSection
-              title="Money & Financial Life"
-              lines={[
-                `Rating: ${report.money.rating}`,
-                `Early vs later life trend: ${report.money.earlyVsLater}`,
-                `Strength areas: ${report.money.strengthAreas}`,
-                `Warning: ${report.money.warning}`,
-                `Advice: ${report.money.advice}`
-              ]}
-            />
-            <ReportSection
-              title="Career & Future Path"
-              lines={[
-                `Best career fields: ${report.career.bestFields}`,
-                `Timeline: ${report.career.timeline}`,
-                `Growth pattern: ${report.career.growthPattern}`,
-                `Key insight: ${report.career.keyInsight}`
-              ]}
-            />
-            <ReportSection
-              title="Reputation / Respect (Avamanam)"
+              title="Respect"
               lines={[
                 `Rating improvement over time: ${report.respect.ratingImprovement}`,
                 `Why people misunderstand you: ${report.respect.misunderstanding}`,
@@ -135,29 +140,33 @@ export function PredictMyFutureScreen() {
                 `Solution: ${report.respect.solution}`
               ]}
             />
+            <View style={styles.dualGrid}>
+              <InsightCard
+                title="Love"
+                accent={colors.danger}
+                items={[
+                  { label: "Nature", value: report.love.emotionalNature },
+                  { label: "Weakness", value: report.love.weakness },
+                  { label: "Timeline", value: report.love.loveTimeline },
+                  { label: "Partner type", value: report.love.partnerType }
+                ]}
+              />
+              <InsightCard
+                title="Health"
+                accent={colors.success}
+                items={[
+                  { label: "Rating", value: report.health.rating },
+                  { label: "Mind & body", value: report.health.issues },
+                  { label: "Advice", value: report.health.advice }
+                ]}
+              />
+            </View>
             <ReportSection
-              title="Love & Relationships"
-              lines={[
-                `Emotional nature: ${report.love.emotionalNature}`,
-                `Weakness: ${report.love.weakness}`,
-                `Love timeline: ${report.love.loveTimeline}`,
-                `Partner type: ${report.love.partnerType}`
-              ]}
-            />
-            <ReportSection
-              title="Marriage Prediction"
+              title="Marriage"
               lines={[
                 `Likely age range: ${report.marriage.likelyAgeRange}`,
                 `Partner personality: ${report.marriage.partnerPersonality}`,
                 `Marriage impact on life: ${report.marriage.impact}`
-              ]}
-            />
-            <ReportSection
-              title="Health & Mind"
-              lines={[
-                `Rating: ${report.health.rating}`,
-                `Mental/emotional issues: ${report.health.issues}`,
-                `Practical advice: ${report.health.advice}`
               ]}
             />
             <ReportSection
@@ -170,24 +179,28 @@ export function PredictMyFutureScreen() {
                 `Key Warning: ${report.currentYear.warning}`
               ]}
             />
-            <ReportSection
-              title="Lucky Factors"
-              lines={[
-                `Lucky numbers: ${report.lucky.numbers}`,
-                `Lucky colors: ${report.lucky.colors}`,
-                `Lucky day: ${report.lucky.day}`,
-                `Suggested habits/practices: ${report.lucky.habits}`
-              ]}
-            />
-            <ReportSection
-              title="Final Truth Section"
-              lines={[
-                `Core strength: ${report.finalTruth.strength}`,
-                `Core weakness: ${report.finalTruth.weakness}`,
-                `Powerful closing statement: ${report.finalTruth.closing}`,
-                `Guidance Line: ${report.finalTruth.guidanceLine}`
-              ]}
-            />
+            <View style={styles.dualGrid}>
+              <InsightCard
+                title="Lucky Factors"
+                accent={colors.gold}
+                items={[
+                  { label: "Numbers", value: report.lucky.numbers },
+                  { label: "Colors", value: report.lucky.colors },
+                  { label: "Day", value: report.lucky.day },
+                  { label: "Habits", value: report.lucky.habits }
+                ]}
+              />
+              <InsightCard
+                title="Final Truth"
+                accent={colors.warning}
+                items={[
+                  { label: "Strength", value: report.finalTruth.strength },
+                  { label: "Weakness", value: report.finalTruth.weakness },
+                  { label: "Closing", value: report.finalTruth.closing },
+                  { label: "Guidance", value: report.finalTruth.guidanceLine }
+                ]}
+              />
+            </View>
           </>
         ) : null}
       </Screen>
@@ -203,11 +216,12 @@ function ZodiacChip({ sign, active, onPress }: { sign: ZodiacName; active: boole
   );
 }
 
-function ReportSection({ title, subtitle, lines }: { title: string; subtitle?: string; lines: string[] }) {
+function ReportSection({ title, eyebrow, lines }: { title: string; eyebrow?: string; lines: string[] }) {
   return (
-    <SectionCard title={title} subtitle={subtitle}>
+    <SectionCard title={title}>
+      {eyebrow ? <Text style={styles.reportEyebrow}>{eyebrow}</Text> : null}
       {lines.map((line, index) => (
-        <Text key={`${title}-${index}`} style={index === lines.length - 1 && title === "Final Truth Section" ? styles.guidanceLine : styles.body}>
+        <Text key={`${title}-${index}`} style={styles.body}>
           {line}
         </Text>
       ))}
@@ -215,21 +229,32 @@ function ReportSection({ title, subtitle, lines }: { title: string; subtitle?: s
   );
 }
 
+function InsightCard({
+  title,
+  accent,
+  items
+}: {
+  title: string;
+  accent: string;
+  items: { label: string; value: string }[];
+}) {
+  return (
+    <View style={styles.insightCard}>
+      <View style={[styles.insightAccent, { backgroundColor: accent }]} />
+      <Text style={styles.insightTitle}>{title}</Text>
+      {items.map((item) => (
+        <View key={`${title}-${item.label}`} style={styles.insightRow}>
+          <Text style={styles.insightLabel}>{item.label}</Text>
+          <Text style={styles.insightValue}>{item.value}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   keyboard: {
     flex: 1
-  },
-  pageTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: "800"
-  },
-  pageSubtitle: {
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6,
-    marginBottom: 10
   },
   label: {
     color: colors.textMuted,
@@ -273,17 +298,71 @@ const styles = StyleSheet.create({
   zodiacChipTextActive: {
     color: colors.text
   },
+  reportHero: {
+    marginBottom: 10,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(216,177,90,0.24)",
+    backgroundColor: "rgba(216,177,90,0.08)"
+  },
+  reportHeroTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "800",
+    marginBottom: 6
+  },
+  reportHeroText: {
+    color: colors.text,
+    fontSize: 13,
+    lineHeight: 20
+  },
+  reportEyebrow: {
+    color: colors.gold,
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: 8
+  },
+  dualGrid: {
+    gap: 10,
+    marginBottom: 10
+  },
+  insightCard: {
+    backgroundColor: colors.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 12
+  },
+  insightAccent: {
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    marginBottom: 10
+  },
+  insightTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 10
+  },
+  insightRow: {
+    marginBottom: 10
+  },
+  insightLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginBottom: 3
+  },
+  insightValue: {
+    color: colors.text,
+    fontSize: 12,
+    lineHeight: 18
+  },
   body: {
     color: colors.textMuted,
     fontSize: 12,
     lineHeight: 18,
     marginBottom: 6
-  },
-  guidanceLine: {
-    color: colors.gold,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 4,
-    fontWeight: "700"
   }
 });

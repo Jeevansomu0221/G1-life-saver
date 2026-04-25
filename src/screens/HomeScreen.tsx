@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ImageBackground, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Screen } from "@/components/Screen";
 import { useAppData } from "@/state/AppDataContext";
@@ -35,7 +35,7 @@ const homeActions = [
 
 export function HomeScreen() {
   const navigation = useNavigation<any>();
-  const { tasks, addTask, toggleTaskCompletion } = useAppData();
+  const { tasks, addTask, deleteTask, toggleTaskCompletion } = useAppData();
   const [addingTask, setAddingTask] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
 
@@ -68,81 +68,115 @@ export function HomeScreen() {
   };
 
   return (
-    <Screen contentStyle={styles.screenContent}>
-      <View style={styles.actionGrid}>
-        {homeActions.map((action) => (
-          <Pressable
-            key={action.title}
-            style={styles.actionCard}
-            onPress={() => {
-              if ("screen" in action) {
-                navigation.navigate(action.screen);
-              } else {
-                navigation.navigate("MainTabs", { screen: action.tab });
-              }
-            }}
-          >
-            <View style={styles.actionTopRow}>
-              <Text style={[styles.actionBadge, { color: action.accent, borderColor: action.accent }]}>{action.badge}</Text>
-              <Text style={[styles.actionArrow, { color: action.accent }]}>{">"}</Text>
-            </View>
-            <Text style={styles.actionTitle}>{action.title}</Text>
-          </Pressable>
-        ))}
-      </View>
+    <KeyboardAvoidingView
+      style={styles.keyboard}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+    >
+      <Screen contentStyle={styles.screenContent} topSafeArea>
+        <Pressable style={styles.heroCard} onPress={() => navigation.navigate("MainTabs", { screen: "Krsna AI" })}>
+          <ImageBackground
+            source={require("../../assets/KrsnaAI-graphics.png")}
+            resizeMode="cover"
+            imageStyle={styles.heroImage}
+            style={styles.heroBackground}
+          />
+        </Pressable>
 
-      <View style={styles.tasksPanel}>
-        <View style={styles.panelHeader}>
-          <Text style={styles.panelTitle}>Tasks</Text>
-          <Pressable style={styles.addButton} onPress={() => setAddingTask((current) => !current)}>
-            <Text style={styles.addButtonText}>+</Text>
-          </Pressable>
+        <View style={styles.actionGrid}>
+          {homeActions.map((action) => (
+            <Pressable
+              key={action.title}
+              style={styles.actionCard}
+              onPress={() => {
+                if ("screen" in action) {
+                  navigation.navigate(action.screen);
+                } else {
+                  navigation.navigate("MainTabs", { screen: action.tab });
+                }
+              }}
+            >
+              <View style={styles.actionTopRow}>
+                <Text style={[styles.actionBadge, { color: action.accent, borderColor: action.accent }]}>{action.badge}</Text>
+                <Text style={[styles.actionArrow, { color: action.accent }]}>{">"}</Text>
+              </View>
+              <Text style={styles.actionTitle}>{action.title}</Text>
+            </Pressable>
+          ))}
         </View>
 
-        {addingTask ? (
-          <View style={styles.addTaskRow}>
-            <TextInput
-              value={taskTitle}
-              onChangeText={setTaskTitle}
-              placeholder="Add task"
-              placeholderTextColor={colors.textMuted}
-              style={styles.taskInput}
-              returnKeyType="done"
-              onSubmitEditing={submitTask}
-            />
-            <Pressable style={styles.saveTaskButton} onPress={submitTask}>
-              <Text style={styles.saveTaskText}>Add</Text>
+        <View style={styles.tasksPanel}>
+          <View style={styles.panelHeader}>
+            <Text style={styles.panelTitle}>Tasks</Text>
+            <Pressable style={styles.addButton} onPress={() => setAddingTask((current) => !current)}>
+              <Text style={styles.addButtonText}>+</Text>
             </Pressable>
           </View>
-        ) : null}
 
-        {visibleTasks.length === 0 ? (
-          <Text style={styles.emptyText}>No tasks yet.</Text>
-        ) : (
-          visibleTasks.map((task) => (
-            <View key={task.id} style={styles.taskRow}>
-              <Pressable
-                style={[styles.tickCircle, task.completed && styles.tickCircleDone]}
-                onPress={() => toggleTaskCompletion(task.id)}
-              >
-                <Text style={[styles.tickMark, task.completed && styles.tickMarkDone]}>{task.completed ? "\u2713" : ""}</Text>
+          {addingTask ? (
+            <View style={styles.addTaskRow}>
+              <TextInput
+                value={taskTitle}
+                onChangeText={setTaskTitle}
+                placeholder="Add task"
+                placeholderTextColor={colors.textMuted}
+                style={styles.taskInput}
+                returnKeyType="done"
+                onSubmitEditing={submitTask}
+              />
+              <Pressable style={styles.saveTaskButton} onPress={submitTask}>
+                <Text style={styles.saveTaskText}>Add</Text>
               </Pressable>
-              <View style={styles.taskContent}>
-                <Text style={[styles.taskTitle, task.completed && styles.completedText]}>{task.title}</Text>
-                <Text style={[styles.taskMeta, isTaskOverdue(task) && styles.overdueText]}>{formatDisplayDate(task.dateTime)}</Text>
-              </View>
             </View>
-          ))
-        )}
-      </View>
+          ) : null}
 
-    </Screen>
+          {visibleTasks.length === 0 ? (
+            <Text style={styles.emptyText}>No tasks yet.</Text>
+          ) : (
+            visibleTasks.map((task) => (
+              <View key={task.id} style={styles.taskRow}>
+                <Pressable
+                  style={[styles.tickCircle, task.completed && styles.tickCircleDone]}
+                  onPress={() => toggleTaskCompletion(task.id)}
+                >
+                  <Text style={[styles.tickMark, task.completed && styles.tickMarkDone]}>{task.completed ? "\u2713" : ""}</Text>
+                </Pressable>
+                <View style={styles.taskContent}>
+                  <Text style={[styles.taskTitle, task.completed && styles.completedText]}>{task.title}</Text>
+                  <Text style={[styles.taskMeta, isTaskOverdue(task) && styles.overdueText]}>{formatDisplayDate(task.dateTime)}</Text>
+                </View>
+                <Pressable style={styles.deleteButton} onPress={() => deleteTask(task.id)}>
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </Pressable>
+              </View>
+            ))
+          )}
+        </View>
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboard: {
+    flex: 1
+  },
   screenContent: {
     paddingBottom: 12
+  },
+  heroCard: {
+    borderRadius: 10,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12
+  },
+  heroBackground: {
+    aspectRatio: 1024 / 500,
+    minHeight: 150
+  },
+  heroImage: {
+    opacity: 0.98
   },
   actionGrid: {
     flexDirection: "row",
@@ -287,6 +321,22 @@ const styles = StyleSheet.create({
   },
   taskContent: {
     flex: 1
+  },
+  deleteButton: {
+    minWidth: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,110,121,0.32)",
+    backgroundColor: "rgba(255,110,121,0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 8
+  },
+  deleteButtonText: {
+    color: colors.danger,
+    fontSize: 11,
+    fontWeight: "800"
   },
   taskTitle: {
     color: colors.text,
