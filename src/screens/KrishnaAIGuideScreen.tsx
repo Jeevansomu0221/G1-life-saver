@@ -4,6 +4,7 @@ import {
   Animated,
   Easing,
   ImageBackground,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -14,8 +15,9 @@ import {
   TextInput,
   View
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { aiService } from "@/services/aiService";
 import { useAppData } from "@/state/AppDataContext";
 import { colors } from "@/theme/colors";
@@ -137,8 +139,8 @@ export function KrishnaAIGuideScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [limitOpen, setLimitOpen] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const insets = useSafeAreaInsets();
 
   const conversation = useMemo(
     () =>
@@ -161,6 +163,29 @@ export function KrishnaAIGuideScreen() {
     }, 60);
     return () => clearTimeout(id);
   }, [conversation, loading]);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSubscription = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setKeyboardVisible(false);
+      Keyboard.dismiss();
+      return () => {
+        setKeyboardVisible(false);
+        Keyboard.dismiss();
+      };
+    }, [])
+  );
 
   const submitMessage = async () => {
     const content = input.trim();
@@ -197,7 +222,7 @@ export function KrishnaAIGuideScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <KeyboardAvoidingView
         style={styles.keyboard}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -226,7 +251,8 @@ export function KrishnaAIGuideScreen() {
           <View style={styles.chatOverlay}>
             <ScrollView
               ref={scrollRef}
-              contentContainerStyle={styles.chatContent}
+              style={styles.chatScroll}
+              contentContainerStyle={[styles.chatContent, { paddingBottom: keyboardVisible ? 8 : 16 }]}
               keyboardShouldPersistTaps="handled"
             >
               {conversation.map((message) => (
@@ -256,7 +282,7 @@ export function KrishnaAIGuideScreen() {
           </View>
         </ImageBackground>
 
-        <View style={[styles.inputShell, { paddingBottom: Math.max(insets.bottom, 8) + 4 }]}>
+        <View style={styles.inputShell}>
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -350,13 +376,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(7,16,29,0.84)"
   },
+  chatScroll: {
+    flex: 1
+  },
   chatContent: {
+    flexGrow: 1,
+    justifyContent: "flex-end",
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingTop: 10,
+    paddingBottom: 2,
     gap: 8
   },
   messageBlock: {
-    marginBottom: 4
+    marginBottom: 0
   },
   bubble: {
     maxWidth: "88%",
@@ -398,7 +430,7 @@ const styles = StyleSheet.create({
   timeText: {
     color: colors.textMuted,
     fontSize: 10,
-    marginTop: 3
+    marginTop: 1
   },
   timeLeft: {
     marginLeft: 4
@@ -427,7 +459,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: 8,
     paddingHorizontal: 12,
-    paddingTop: 8,
+    paddingTop: 4,
+    paddingBottom: 6,
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.06)",
     backgroundColor: "rgba(9,17,33,0.96)"

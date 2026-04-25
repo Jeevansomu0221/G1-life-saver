@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { LabeledInput } from "@/components/LabeledInput";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Screen } from "@/components/Screen";
@@ -45,147 +45,153 @@ export function PredictMyFutureScreen() {
   };
 
   return (
-    <Screen>
-      <Text style={styles.pageTitle}>Predict My Future</Text>
-      <Text style={styles.pageSubtitle}>Use your DOB or zodiac sign to generate a personal reading.</Text>
+    <KeyboardAvoidingView
+      style={styles.keyboard}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+    >
+      <Screen>
+        <Text style={styles.pageTitle}>Predict My Future</Text>
+        <Text style={styles.pageSubtitle}>Use your DOB or zodiac sign to generate a personal reading.</Text>
 
-      <SectionCard title="Your Inputs" subtitle="Simple details only">
-        <Text style={styles.label}>Input Mode</Text>
-        <SegmentedControl
-          value={mode}
-          options={[
-            { label: "DOB", value: "dob" },
-            { label: "Zodiac", value: "zodiac" }
-          ]}
-          onChange={setMode}
-        />
+        <SectionCard title="Your Inputs" subtitle="Simple details only">
+          <Text style={styles.label}>Input Mode</Text>
+          <SegmentedControl
+            value={mode}
+            options={[
+              { label: "DOB", value: "dob" },
+              { label: "Zodiac", value: "zodiac" }
+            ]}
+            onChange={setMode}
+          />
 
-        {mode === "dob" ? (
+          {mode === "dob" ? (
+            <>
+              <LabeledInput label="Date of Birth" value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="YYYY-MM-DD" />
+              <LabeledInput label="Place of Birth (Optional)" value={placeOfBirth} onChangeText={setPlaceOfBirth} placeholder="City, State" />
+              <LabeledInput label="Time of Birth (Optional)" value={timeOfBirth} onChangeText={setTimeOfBirth} placeholder="HH:MM AM/PM" />
+              {detectedZodiac ? <Text style={styles.detectedText}>Detected Zodiac: {detectedZodiac}</Text> : null}
+            </>
+          ) : (
+            <>
+              <Text style={styles.label}>Zodiac Sign</Text>
+              <View style={styles.zodiacGrid}>
+                {zodiacOptions.map((sign) => (
+                  <ZodiacChip
+                    key={sign}
+                    sign={sign}
+                    active={selectedZodiac === sign}
+                    onPress={() => setSelectedZodiac(sign)}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+
+          <Text style={styles.label}>Main Focus</Text>
+          <SegmentedControl value={mainFocus} options={focusOptions} onChange={setMainFocus} />
+
+          <PrimaryButton label="Generate Prediction" onPress={buildReport} />
+        </SectionCard>
+
+        {report ? (
           <>
-            <LabeledInput label="Date of Birth" value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="YYYY-MM-DD" />
-            <LabeledInput label="Place of Birth (Optional)" value={placeOfBirth} onChangeText={setPlaceOfBirth} placeholder="City, State" />
-            <LabeledInput label="Time of Birth (Optional)" value={timeOfBirth} onChangeText={setTimeOfBirth} placeholder="HH:MM AM/PM" />
-            {detectedZodiac ? <Text style={styles.detectedText}>Detected Zodiac: {detectedZodiac}</Text> : null}
+            <ReportSection title="Header" lines={[report.header]} />
+            <ReportSection
+              title="Core Personality"
+              subtitle={report.nakshatraStyle}
+              lines={[
+                `Outer personality: ${report.corePersonality.outer}`,
+                `Inner personality: ${report.corePersonality.inner}`,
+                `How others see you: ${report.corePersonality.othersSee}`,
+                `Hidden traits: ${report.corePersonality.hidden}`
+              ]}
+            />
+            <ReportSection
+              title="Money & Financial Life"
+              lines={[
+                `Rating: ${report.money.rating}`,
+                `Early vs later life trend: ${report.money.earlyVsLater}`,
+                `Strength areas: ${report.money.strengthAreas}`,
+                `Warning: ${report.money.warning}`,
+                `Advice: ${report.money.advice}`
+              ]}
+            />
+            <ReportSection
+              title="Career & Future Path"
+              lines={[
+                `Best career fields: ${report.career.bestFields}`,
+                `Timeline: ${report.career.timeline}`,
+                `Growth pattern: ${report.career.growthPattern}`,
+                `Key insight: ${report.career.keyInsight}`
+              ]}
+            />
+            <ReportSection
+              title="Reputation / Respect (Avamanam)"
+              lines={[
+                `Rating improvement over time: ${report.respect.ratingImprovement}`,
+                `Why people misunderstand you: ${report.respect.misunderstanding}`,
+                `Main issue: ${report.respect.mainIssue}`,
+                `Solution: ${report.respect.solution}`
+              ]}
+            />
+            <ReportSection
+              title="Love & Relationships"
+              lines={[
+                `Emotional nature: ${report.love.emotionalNature}`,
+                `Weakness: ${report.love.weakness}`,
+                `Love timeline: ${report.love.loveTimeline}`,
+                `Partner type: ${report.love.partnerType}`
+              ]}
+            />
+            <ReportSection
+              title="Marriage Prediction"
+              lines={[
+                `Likely age range: ${report.marriage.likelyAgeRange}`,
+                `Partner personality: ${report.marriage.partnerPersonality}`,
+                `Marriage impact on life: ${report.marriage.impact}`
+              ]}
+            />
+            <ReportSection
+              title="Health & Mind"
+              lines={[
+                `Rating: ${report.health.rating}`,
+                `Mental/emotional issues: ${report.health.issues}`,
+                `Practical advice: ${report.health.advice}`
+              ]}
+            />
+            <ReportSection
+              title="Current Year Prediction"
+              lines={[
+                `Money: ${report.currentYear.money}`,
+                `Career: ${report.currentYear.career}`,
+                `Respect: ${report.currentYear.respect}`,
+                `Love: ${report.currentYear.love}`,
+                `Key Warning: ${report.currentYear.warning}`
+              ]}
+            />
+            <ReportSection
+              title="Lucky Factors"
+              lines={[
+                `Lucky numbers: ${report.lucky.numbers}`,
+                `Lucky colors: ${report.lucky.colors}`,
+                `Lucky day: ${report.lucky.day}`,
+                `Suggested habits/practices: ${report.lucky.habits}`
+              ]}
+            />
+            <ReportSection
+              title="Final Truth Section"
+              lines={[
+                `Core strength: ${report.finalTruth.strength}`,
+                `Core weakness: ${report.finalTruth.weakness}`,
+                `Powerful closing statement: ${report.finalTruth.closing}`,
+                `Guidance Line: ${report.finalTruth.guidanceLine}`
+              ]}
+            />
           </>
-        ) : (
-          <>
-            <Text style={styles.label}>Zodiac Sign</Text>
-            <View style={styles.zodiacGrid}>
-              {zodiacOptions.map((sign) => (
-                <ZodiacChip
-                  key={sign}
-                  sign={sign}
-                  active={selectedZodiac === sign}
-                  onPress={() => setSelectedZodiac(sign)}
-                />
-              ))}
-            </View>
-          </>
-        )}
-
-        <Text style={styles.label}>Main Focus</Text>
-        <SegmentedControl value={mainFocus} options={focusOptions} onChange={setMainFocus} />
-
-        <PrimaryButton label="Generate Prediction" onPress={buildReport} />
-      </SectionCard>
-
-      {report ? (
-        <>
-          <ReportSection title="Header" lines={[report.header]} />
-          <ReportSection
-            title="Core Personality"
-            subtitle={report.nakshatraStyle}
-            lines={[
-              `Outer personality: ${report.corePersonality.outer}`,
-              `Inner personality: ${report.corePersonality.inner}`,
-              `How others see you: ${report.corePersonality.othersSee}`,
-              `Hidden traits: ${report.corePersonality.hidden}`
-            ]}
-          />
-          <ReportSection
-            title="Money & Financial Life"
-            lines={[
-              `Rating: ${report.money.rating}`,
-              `Early vs later life trend: ${report.money.earlyVsLater}`,
-              `Strength areas: ${report.money.strengthAreas}`,
-              `Warning: ${report.money.warning}`,
-              `Advice: ${report.money.advice}`
-            ]}
-          />
-          <ReportSection
-            title="Career & Future Path"
-            lines={[
-              `Best career fields: ${report.career.bestFields}`,
-              `Timeline: ${report.career.timeline}`,
-              `Growth pattern: ${report.career.growthPattern}`,
-              `Key insight: ${report.career.keyInsight}`
-            ]}
-          />
-          <ReportSection
-            title="Reputation / Respect (Avamanam)"
-            lines={[
-              `Rating improvement over time: ${report.respect.ratingImprovement}`,
-              `Why people misunderstand you: ${report.respect.misunderstanding}`,
-              `Main issue: ${report.respect.mainIssue}`,
-              `Solution: ${report.respect.solution}`
-            ]}
-          />
-          <ReportSection
-            title="Love & Relationships"
-            lines={[
-              `Emotional nature: ${report.love.emotionalNature}`,
-              `Weakness: ${report.love.weakness}`,
-              `Love timeline: ${report.love.loveTimeline}`,
-              `Partner type: ${report.love.partnerType}`
-            ]}
-          />
-          <ReportSection
-            title="Marriage Prediction"
-            lines={[
-              `Likely age range: ${report.marriage.likelyAgeRange}`,
-              `Partner personality: ${report.marriage.partnerPersonality}`,
-              `Marriage impact on life: ${report.marriage.impact}`
-            ]}
-          />
-          <ReportSection
-            title="Health & Mind"
-            lines={[
-              `Rating: ${report.health.rating}`,
-              `Mental/emotional issues: ${report.health.issues}`,
-              `Practical advice: ${report.health.advice}`
-            ]}
-          />
-          <ReportSection
-            title="Current Year Prediction"
-            lines={[
-              `Money: ${report.currentYear.money}`,
-              `Career: ${report.currentYear.career}`,
-              `Respect: ${report.currentYear.respect}`,
-              `Love: ${report.currentYear.love}`,
-              `Key Warning: ${report.currentYear.warning}`
-            ]}
-          />
-          <ReportSection
-            title="Lucky Factors"
-            lines={[
-              `Lucky numbers: ${report.lucky.numbers}`,
-              `Lucky colors: ${report.lucky.colors}`,
-              `Lucky day: ${report.lucky.day}`,
-              `Suggested habits/practices: ${report.lucky.habits}`
-            ]}
-          />
-          <ReportSection
-            title="Final Truth Section"
-            lines={[
-              `Core strength: ${report.finalTruth.strength}`,
-              `Core weakness: ${report.finalTruth.weakness}`,
-              `Powerful closing statement: ${report.finalTruth.closing}`,
-              `Guidance Line: ${report.finalTruth.guidanceLine}`
-            ]}
-          />
-        </>
-      ) : null}
-    </Screen>
+        ) : null}
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -210,6 +216,9 @@ function ReportSection({ title, subtitle, lines }: { title: string; subtitle?: s
 }
 
 const styles = StyleSheet.create({
+  keyboard: {
+    flex: 1
+  },
   pageTitle: {
     color: colors.text,
     fontSize: 22,

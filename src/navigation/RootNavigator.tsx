@@ -1,11 +1,11 @@
 import React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BhagvadgitaDailyScreen } from "@/screens/BhagvadgitaDailyScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { PredictMyFutureScreen } from "@/screens/PredictMyFutureScreen";
-import { PrivacyScreen } from "@/screens/PrivacyScreen";
 import { KrishnaAIGuideScreen } from "@/screens/KrishnaAIGuideScreen";
 import { WhatWillHappenTodayScreen } from "@/screens/WhatWillHappenTodayScreen";
 import { useAppData } from "@/state/AppDataContext";
@@ -31,16 +31,19 @@ function Dot({ focused, tint }: { focused: boolean; tint: string }) {
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: "#091122",
           borderTopColor: colors.border,
-          height: 72,
-          paddingBottom: 10,
-          paddingTop: 8
+          height: (Platform.OS === "android" ? 62 : 56) + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, Platform.OS === "android" ? 10 : 6),
+          paddingTop: 6
         },
         tabBarActiveTintColor: colors.gold,
         tabBarInactiveTintColor: colors.textMuted,
@@ -97,7 +100,6 @@ export function RootNavigator() {
       <Stack.Screen name="Predict My Future" component={PredictMyFutureScreen} />
       <Stack.Screen name="Bhagvadgita Daily" component={BhagvadgitaDailyScreen} />
       <Stack.Screen name="Wt Will Happen Today" component={WhatWillHappenTodayScreen} />
-      <Stack.Screen name="Privacy & AI Policy" component={PrivacyScreen} />
     </Stack.Navigator>
   );
 }
