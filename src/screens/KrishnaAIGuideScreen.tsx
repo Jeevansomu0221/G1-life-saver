@@ -16,6 +16,7 @@ import {
   View
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { aiService } from "@/services/aiService";
@@ -140,7 +141,10 @@ export function KrishnaAIGuideScreen() {
   const [loading, setLoading] = useState(false);
   const [limitOpen, setLimitOpen] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const tabBarHeight = useBottomTabBarHeight();
+  const androidKeyboardOffset = Math.max(keyboardHeight - tabBarHeight + 18, 0);
 
   const conversation = useMemo(
     () =>
@@ -167,8 +171,14 @@ export function KrishnaAIGuideScreen() {
   useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const showSubscription = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hideSubscription = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    const showSubscription = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardVisible(true);
+      setKeyboardHeight(event.endCoordinates?.height ?? 0);
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+    });
 
     return () => {
       showSubscription.remove();
@@ -179,9 +189,11 @@ export function KrishnaAIGuideScreen() {
   useFocusEffect(
     React.useCallback(() => {
       setKeyboardVisible(false);
+      setKeyboardHeight(0);
       Keyboard.dismiss();
       return () => {
         setKeyboardVisible(false);
+        setKeyboardHeight(0);
         Keyboard.dismiss();
       };
     }, [])
@@ -225,7 +237,8 @@ export function KrishnaAIGuideScreen() {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <KeyboardAvoidingView
         style={styles.keyboard}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        enabled={Platform.OS === "ios"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
         <LinearGradient colors={["#0E1C36", "#08111F"]} style={styles.header}>
@@ -282,7 +295,12 @@ export function KrishnaAIGuideScreen() {
           </View>
         </ImageBackground>
 
-        <View style={styles.inputShell}>
+        <View
+          style={[
+            styles.inputShell,
+            Platform.OS === "android" && keyboardVisible ? { marginBottom: androidKeyboardOffset } : null
+          ]}
+        >
           <TextInput
             value={input}
             onChangeText={setInput}

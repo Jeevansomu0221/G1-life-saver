@@ -32,16 +32,17 @@ function Dot({ focused, tint }: { focused: boolean; tint: string }) {
 
 function MainTabs() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = (Platform.OS === "android" ? 62 : 56) + insets.bottom;
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarHideOnKeyboard: true,
+        tabBarHideOnKeyboard: false,
         tabBarStyle: {
           backgroundColor: "#091122",
           borderTopColor: colors.border,
-          height: (Platform.OS === "android" ? 62 : 56) + insets.bottom,
+          height: tabBarHeight,
           paddingBottom: Math.max(insets.bottom, Platform.OS === "android" ? 10 : 6),
           paddingTop: 6
         },
